@@ -276,9 +276,9 @@ function Camera({ subjectZ, distance, height, focal }: { subjectZ: number; dista
 
 function Studio({ lights, subjectZ, cameraDistance, subjectRotY, selected, onSelect, showSpotPoint, setShowSpotPoint, canvasRef, cameraHeight, focalLength }: { lights: Light[]; subjectZ: number; cameraDistance: number; subjectRotY: number; selected: string | null; onSelect: (id: string | null) => void; showSpotPoint: boolean; setShowSpotPoint: (val: boolean) => void; canvasRef: RefObject<HTMLCanvasElement | null>; cameraHeight: number; focalLength: number }) {
   return <Canvas shadows camera={{ position: [4.5, 4.2, 4.5], fov: 34 }}>
-    <color attach="background" args={['#11151d']} /><ambientLight intensity={0.42} /><directionalLight castShadow position={[3, 7, 4]} intensity={1.1} />
-    <gridHelper args={[10, 20, '#67788c', '#384657']} position={[0, .01, 0]} />
-    <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -.02, 0]}><planeGeometry args={[10, 10]} /><meshStandardMaterial color="#151b24" roughness={.94} /></mesh>
+    <color attach="background" args={['#050608']} /><ambientLight intensity={0.07} />
+    <gridHelper args={[10, 20, '#28313c', '#151b22']} position={[0, .01, 0]} />
+    <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -.02, 0]}><planeGeometry args={[10, 10]} /><meshStandardMaterial color="#090c10" roughness={.94} /></mesh>
     <group position={[0, 0, subjectZ]}><Venus rotationY={subjectRotY} /></group>
     {lights.filter(l => l.enabled).map(light => <StudioLight key={light.id} light={light} subjectZ={subjectZ} isSelected={selected === light.id} onSelect={() => onSelect(light.id)} showSpotPoint={showSpotPoint} />)}
     <Camera subjectZ={subjectZ} distance={cameraDistance} height={cameraHeight} focal={focalLength} />
@@ -443,7 +443,14 @@ export function App() {
     const radians = angle * Math.PI / 180
     editLight(id, { x: Math.sin(radians) * distance, z: subjectZ + Math.cos(radians) * distance })
   }
-  const apply = (id: string) => { const preset = setups.find(x => x.id === id)!; setLights(preset.lights); setActiveSetup(id); setSelected(null); setQuestionIndex(0); setTipIndex(0); setTipVisible(false) }
+  const showFirstTip = (setupId: string) => {
+    const tips = knowledgeBySetup[setupId]
+    if (!tips || tips.length === 0) return
+    setTip(tips[0])
+    setTipIndex(1)
+    setTipVisible(true)
+  }
+  const apply = (id: string) => { const preset = setups.find(x => x.id === id)!; setLights(preset.lights); setActiveSetup(id); setSelected(null); setQuestionIndex(0); showFirstTip(id) }
   const showNextTip = () => {
     if (tipVisible) return
     const tips = knowledgeBySetup[activeSetup]
@@ -482,7 +489,7 @@ export function App() {
   }
   const selectedSetup = setups.find(setup => setup.id === activeSetup)!
   return <main>
-    {introOpen && <div className="intro-overlay"><div className="intro-card"><span className="eyebrow">SIMULATEUR E-LEARNING</span><h1>Studio Light Lab</h1><p>Apprenez les principaux schémas d’éclairage photographique en explorant un plateau virtuel en 3D : placez votre caméra, positionnez votre sujet et composez la lumière, puis observez le résultat dans l’aperçu comme si vous étiez derrière l’appareil. Vous pouvez même prendre une photo de rendu.</p><ul className="intro-steps"><li><strong>1</strong><span>Choisissez un schéma de lumière (Rembrandt, Butterfly, Loop, Split…).</span></li><li><strong>2</strong><span>Étape 1 — Paramétrez votre cadrage et le positionnement de Vénus.</span></li><li><strong>3</strong><span>Étape 2 — Paramétrez vos lumières principale et de remplissage.</span></li><li><strong>4</strong><span>Gardez un œil en direct dans l’aperçu et cliquez sur « Prendre une photo ».</span></li><li><strong>5</strong><span>Tout au long de votre parcours, des questions vous seront posées : une bonne réponse vous apporte un point + un feedback, une mauvaise réponse un feedback.</span></li></ul><button type="button" className="intro-cta" onClick={() => setIntroOpen(false)}>Commencer votre simulation</button></div></div>}
+    {introOpen && <div className="intro-overlay"><div className="intro-card"><span className="eyebrow">SIMULATEUR E-LEARNING</span><h1>Studio Light Lab</h1><p>Apprenez les principaux schémas d’éclairage photographique en explorant un plateau virtuel en 3D : placez votre caméra, positionnez votre sujet et composez la lumière, puis observez le résultat dans l’aperçu comme si vous étiez derrière l’appareil. Vous pouvez même prendre une photo de rendu.</p><ul className="intro-steps"><li><strong>1</strong><span>Choisissez un schéma de lumière (Rembrandt, Butterfly, Loop, Split…).</span></li><li><strong>2</strong><span>Étape 1 — Paramétrez votre cadrage et le positionnement de Vénus.</span></li><li><strong>3</strong><span>Étape 2 — Paramétrez vos lumières principale et de remplissage.</span></li><li><strong>4</strong><span>Gardez un œil en direct dans l’aperçu et cliquez sur « Prendre une photo ».</span></li><li><strong>5</strong><span>Tout au long de votre parcours, des questions vous seront posées : une bonne réponse vous apporte un point + un feedback, une mauvaise réponse un feedback.</span></li></ul><button type="button" className="intro-cta" onClick={() => { setIntroOpen(false); showFirstTip(activeSetup) }}>Commencer votre simulation</button></div></div>}
     {quizOpen && question && <QuizModal key={question.id} question={question} schemeLabel={selectedSetup.label} correct={correctBySetup[activeSetup]} onResult={handleQuizResult} onClose={() => setQuizOpen(false)} />}
     {endOpen && <div className="end-overlay"><div className="end-card"><span className="eyebrow">FIN DU PARCOURS</span><h1>Résultats<span className="title-dot">.</span> Niveau <span className="end-level">{level}</span></h1><p className="end-summary">{totalCorrect}/21 bonnes réponses sur {answeredTotal} question{answeredTotal > 1 ? 's' : ''} posée{answeredTotal > 1 ? 's' : ''}.</p><div className="end-grid">{setups.map(s => <div key={s.id} className="end-row"><strong>{s.label}</strong><StarBadge correct={correctBySetup[s.id]} /></div>)}</div><div className="end-actions"><button type="button" className="intro-cta" onClick={() => setEndOpen(false)}>Poursuivre</button><button type="button" className="intro-ghost" onClick={resetAll}>Recommencer</button></div></div></div>}
     <section className="workspace">
