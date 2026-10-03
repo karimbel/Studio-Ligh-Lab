@@ -1,0 +1,11 @@
+Model Information:
+* title:	α style DSLR Camera
+* source:	https://sketchfab.com/3d-models/style-dslr-camera-108bda3d38d44a40ab99fa84b48a6925
+* author:	tuma_youzyo/T_Y (https://sketchfab.com/tumayouzi)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "α style DSLR Camera" (https://sketchfab.com/3d-models/style-dslr-camera-108bda3d38d44a40ab99fa84b48a6925) by tuma_youzyo/T_Y (https://sketchfab.com/tumayouzi) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

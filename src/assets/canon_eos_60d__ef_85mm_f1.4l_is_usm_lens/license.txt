@@ -1,0 +1,11 @@
+Model Information:
+* title:	Canon EOS 60D + EF 85mm f/1.4l IS USM Lens
+* source:	https://sketchfab.com/3d-models/canon-eos-60d-ef-85mm-f14l-is-usm-lens-80f7a79909b3492c82e7ebab76f0c93f
+* author:	Loïc ALIX (https://sketchfab.com/loic.alix)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Canon EOS 60D + EF 85mm f/1.4l IS USM Lens" (https://sketchfab.com/3d-models/canon-eos-60d-ef-85mm-f14l-is-usm-lens-80f7a79909b3492c82e7ebab76f0c93f) by Loïc ALIX (https://sketchfab.com/loic.alix) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
