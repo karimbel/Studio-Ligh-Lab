@@ -27,3 +27,4 @@ export const IconRestart = (p: { size?: number }) => <Icon {...p}><path d="M4.5 
 export const IconCheck = (p: { size?: number }) => <Icon {...p}><path d="M5 12.5l4.2 4.2L19 7" /></Icon>
 export const IconCross = (p: { size?: number }) => <Icon {...p}><path d="M7 7l10 10M17 7 7 17" /></Icon>
 export const IconQuestion = (p: { size?: number }) => <Icon {...p}><path d="M4.5 6.5h15v9h-8l-4.5 3.5v-3.5H4.5Z" /><path d="M10.4 9.4a1.7 1.7 0 1 1 2.3 1.6c-.5.2-.7.5-.7 1" /><path d="M12 13.6h.01" /></Icon>
+export const IconChevron = (p: { size?: number }) => <Icon {...p}><path d="M6.5 9.5 12 15l5.5-5.5" /></Icon>

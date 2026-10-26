@@ -93,8 +93,23 @@ aside::-webkit-scrollbar-track { background: transparent }
 .info-pop { position: relative; padding: 14px 16px; background: rgba(16, 21, 30, .94); border: 1px solid #e3b341; border-left: 3px solid #e3b341; border-radius: 12px; box-shadow: 0 14px 34px #000a; animation: rise .35s ease-out }
 .info-pop p { color: #c4d2e2; font-size: 12px; line-height: 1.6; margin-top: 8px }
 .info-pop-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px }
-.info-close { background: transparent; border: 0; color: #7f92aa; font-size: 18px; line-height: 1 }
-.info-close:hover { color: #dce6f3 }
+/* cartes repliables : rendu recherché et consignes */
+.card-head { width: 100%; display: flex; align-items: center; gap: 9px; padding: 0; border: 0; background: none; color: inherit; text-align: left }
+.card-head .eyebrow { flex: 1; min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.card-chevron { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 6px; color: #8fa1b8; transition: transform .2s, background .15s }
+.card-head:hover .card-chevron, .diagnostic-head:hover .card-chevron { background: #1b2430; color: #dce6f3 }
+.info-pop:not(.is-collapsed) .card-chevron, .diagnostic:not(.is-collapsed) .card-chevron { transform: rotate(180deg) }
+.card-thumb { flex: none; width: 46px; height: 30px; object-fit: cover; object-position: center 35%; border-radius: 5px; border: 1px solid #3a4b5e }
+.card-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #e3b341; box-shadow: 0 0 8px rgba(227, 179, 65, .8); animation: pulse-dot 1.6s ease-in-out infinite }
+@keyframes pulse-dot { 50% { opacity: .4 } }
+.info-pop.is-collapsed { padding: 8px 10px 8px 12px }
+.tip-body { margin-top: 10px }
+.tip-body .eyebrow { margin: 0; color: #e3b341 }
+.tip-body p { margin-top: 4px }
+.diagnostic-head { gap: 8px }
+.diagnostic-head .diagnostic-score { margin-left: auto }
+.diag-meter { height: 3px; margin-top: 8px; border-radius: 2px; background: #233040; overflow: hidden }
+.diag-meter span { display: block; height: 100%; background: linear-gradient(90deg, #e3b341, var(--ok)); transition: width .3s }
 .lighting-reference { margin: 10px 0 0; overflow: hidden; border: 1px solid #3a4b5e; border-radius: 9px; background: #111923 }
 .lighting-reference img { display: block; width: 100%; aspect-ratio: 16 / 8; object-fit: cover; object-position: center 42% }
 .lighting-reference figcaption { padding: 5px 8px; color: #9eb1c6; background: rgba(10, 15, 22, .72); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase }

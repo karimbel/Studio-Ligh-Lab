@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useI18n, type TKey } from '../i18n'
 import { groupOrder, type Check, type CheckGroup } from '../challenge'
-import { IconCamera, IconCheck, IconCross, IconEye, IconFill, IconKey, IconRestart, IconRim, IconTarget } from './icons'
+import { IconCamera, IconCheck, IconChevron, IconCross, IconEye, IconFill, IconKey, IconRestart, IconRim, IconTarget } from './icons'
 
 type Props = {
   checks: Check[]
@@ -32,10 +32,12 @@ export function Diagnostic({ checks, active, done, justSolved, solutionShown, ca
   const groups = groupOrder.map(group => ({ group, items: checks.filter(check => check.group === group) })).filter(g => g.items.length > 0)
 
   return <div className={`diagnostic ${active ? 'is-active' : ''} ${justSolved ? 'is-solved' : ''} ${collapsed ? 'is-collapsed' : ''}`}>
-    <button type="button" className="diagnostic-head" onClick={() => setCollapsed(c => !c)} aria-expanded={!collapsed}>
+    <button type="button" className="diagnostic-head" onClick={() => setCollapsed(c => !c)} aria-expanded={!collapsed} title={t(collapsed ? 'common.expand' : 'common.collapse')}>
       <span className="eyebrow">{active ? t('diag.challenge') : t('diag.title')}</span>
       <span className="diagnostic-score">{checks.filter(c => c.ok).length}/{checks.length}</span>
+      <span className="card-chevron"><IconChevron size={16} /></span>
     </button>
+    {collapsed && <div className="diag-meter" aria-hidden="true"><span style={{ width: `${(checks.filter(c => c.ok).length / Math.max(1, checks.length)) * 100}%` }} /></div>}
     {!collapsed && <>
       {justSolved && <div className="diagnostic-win"><strong>{t('diag.solved')}</strong><p>{t(solutionShown ? 'diag.solvedNoStar' : 'diag.solvedText')}</p></div>}
       {active && !justSolved && <p className="field-hint">{t('diag.startHint')}</p>}

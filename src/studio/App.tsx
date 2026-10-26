@@ -10,6 +10,7 @@ import { LightPanel, RatioMeter } from './ui/LightPanel'
 import { SubjectPanel, backdropColors } from './ui/SubjectPanel'
 import { TopView } from './ui/TopView'
 import { Diagnostic } from './ui/Diagnostic'
+import { ReferenceCard } from './ui/ReferenceCard'
 import { Preview } from './ui/Preview'
 import { QuizModal, QuizTimer, StarBadge } from './ui/Quiz'
 import { ContactSheet, Credits, EndModal, Intro, Toast, type Shot } from './ui/Overlays'
@@ -69,6 +70,9 @@ export function App() {
   const [justSolved, setJustSolved] = useState(false)
   const [tip, setTip] = useState<string | null>(null)
   const [tipIndex, setTipIndex] = useState(0)
+  // cartes repliables : sur mobile, elles démarrent repliées
+  const [tipCollapsed, setTipCollapsed] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 720px)').matches)
+  const [tipUnread, setTipUnread] = useState(false)
   const [endOpen, setEndOpen] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [creditsOpen, setCreditsOpen] = useState(false)
@@ -119,12 +123,14 @@ export function App() {
     if (!tips?.length) return
     setTip(l(tips[index % tips.length]))
     setTipIndex(index + 1)
+    if (tipCollapsed) setTipUnread(true) // repliée : on signale la nouveauté sans rouvrir la carte
   }
   useEffect(() => {
-    if (tip || modalOpen) return
+    // une nouvelle astuce toutes les minutes (hors fenêtres ouvertes)
+    if (modalOpen || introOpen) return
     const id = window.setTimeout(() => showTip(activeSetup, tipIndex), TIP_INTERVAL)
     return () => window.clearTimeout(id)
-  }, [tip, modalOpen, activeSetup, tipIndex, lang])
+  }, [modalOpen, introOpen, activeSetup, tipIndex, lang, tipCollapsed])
 
   /** Démarre l'exercice : boîtier et lampes déréglés, à partir d'un point de départ différent du précédent. */
   const startExercise = () => {
@@ -294,11 +300,7 @@ export function App() {
           <Studio lights={lights} labels={labels} formatDistance={value => i18n.num(value)} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraAngle={cameraAngle} cameraDistance={cameraDistance} cameraHeight={cameraHeight} focalLength={focalLength} selected={selected} onSelect={select} showSpotPoint={showSpotPoint} backdrop={backdrop} background={background} previewRef={previewRef} captureRef={captureRef} />
           {/* colonne de gauche : astuce puis consignes ; le plan passe à droite */}
           <div className="stage-left">
-            {tip && <div className="info-pop" role="note">
-              <div className="info-pop-head"><span className="eyebrow">{t('tip.eyebrow')} • {l(setup.label).toUpperCase()}</span><button type="button" className="info-close" onClick={() => setTip(null)} aria-label={t('common.close')}>×</button></div>
-              {setup.reference && <figure className="lighting-reference"><img src={setup.reference} alt={t('tip.alt', { label: l(setup.label) })} /><figcaption>{t('tip.reference')}</figcaption></figure>}
-              <p>{tip}</p>
-            </div>}
+            <ReferenceCard label={l(setup.label)} reference={setup.reference} tip={tip} collapsed={tipCollapsed} unread={tipUnread} onToggle={() => { setTipCollapsed(c => !c); setTipUnread(false) }} />
             <Diagnostic canShowSolution={solutionUnlocked} checks={checks} active={challengeActive} done={!!challengeDone[activeSetup]} justSolved={justSolved} solutionShown={!!solutionShown[activeSetup]} onRestart={startExercise} onShowSolution={showSolution} />
           </div>
           {!introOpen && <QuizTimer seconds={QUIZ_INTERVAL} paused={modalOpen} stars={starsOf(activeSetup)} finished={(quizStars[activeSetup] ?? 0) >= QUIZ_STARS} locked={!!solutionShown[activeSetup]} onFire={fireQuestion} />}
