@@ -257,7 +257,7 @@ export function App() {
             <span className="tab-label">{t(`tab.${item.id}`)}</span>
           </button>)}
         </div>
-        <div className="tab-panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+        <div key={tab} className="tab-panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
           {tab === 'subject' && <SubjectPanel cameraAngle={cameraAngle} setCameraAngle={setCameraAngle} cameraDistance={cameraDistance} setCameraDistance={setCameraDistance} cameraHeight={cameraHeight} setCameraHeight={setCameraHeight} focalLength={focalLength} setFocalLength={setFocalLength} subjectZ={subjectZ} setSubjectZ={moveSubject} subjectRotY={subjectRotY} setSubjectRotY={setSubjectRotY} backdrop={backdrop} setBackdrop={setBackdrop} background={background} setBackground={setBackground} />}
           {tab === 'key' && <>
             <LightPanel {...panelProps(key)} />
