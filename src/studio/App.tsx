@@ -235,7 +235,7 @@ export function App() {
           <span className="tip">{t('scene.grid')}</span>
         </div>
         <div className="stage">
-          <Studio lights={lights} labels={labels} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraDistance={cameraDistance} cameraHeight={cameraHeight} focalLength={focalLength} selected={selected} onSelect={select} showSpotPoint={showSpotPoint} backdrop={backdrop} background={background} previewRef={previewRef} captureRef={captureRef} />
+          <Studio lights={lights} labels={labels} formatDistance={value => i18n.num(value)} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraDistance={cameraDistance} cameraHeight={cameraHeight} focalLength={focalLength} selected={selected} onSelect={select} showSpotPoint={showSpotPoint} backdrop={backdrop} background={background} previewRef={previewRef} captureRef={captureRef} />
           {tip && <div className="info-pop" role="note">
             <div className="info-pop-head"><span className="eyebrow">{t('tip.eyebrow')} • {l(setup.label).toUpperCase()}</span><button type="button" className="info-close" onClick={() => setTip(null)} aria-label={t('common.close')}>×</button></div>
             {setup.reference && <figure className="lighting-reference"><img src={setup.reference} alt={t('tip.alt', { label: l(setup.label) })} /><figcaption>{t('tip.reference')}</figcaption></figure>}

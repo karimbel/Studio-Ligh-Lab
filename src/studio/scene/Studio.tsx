@@ -1,7 +1,7 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Html, Line, useGLTF } from '@react-three/drei'
 import { useEffect, useMemo, useRef, type MutableRefObject, type RefObject } from 'react'
-import { Box3, Mesh, Object3D, Vector3, SpotLight, Quaternion, DoubleSide, WebGLRenderer, PerspectiveCamera, PCFShadowMap } from 'three'
+import { Box3, Mesh, MeshStandardMaterial, Object3D, Vector3, SpotLight, Quaternion, DoubleSide, WebGLRenderer, PerspectiveCamera, PCFShadowMap } from 'three'
 import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import venusModel from '../../assets/53082b5d6cef4c34a9701a2a24f58075.glb'
 import {
@@ -26,6 +26,16 @@ function CameraProp() {
     copy.traverse((child: Object3D) => {
       if ((child as { isLight?: boolean }).isLight) child.visible = false
       child.layers.set(GUIDE_LAYER)
+      // repère hors des faisceaux : on l'éclaire « de l'intérieur » pour qu'il reste lisible dans la vue studio
+      const mesh = child as Mesh
+      if (mesh.isMesh) {
+        const materials = (Array.isArray(mesh.material) ? mesh.material : [mesh.material]).map(material => {
+          const copy = material.clone() as MeshStandardMaterial
+          if (copy.emissive) { copy.emissive.set('#8a96a6'); copy.emissiveMap = copy.map ?? null; copy.emissiveIntensity = 1.2 }
+          return copy
+        })
+        mesh.material = Array.isArray(mesh.material) ? materials : materials[0]
+      }
     })
     const bounds = new Box3().setFromObject(copy)
     const size = bounds.getSize(new Vector3())
@@ -76,7 +86,7 @@ function BeamVisual({ height, targetHeight, planar, angle, color }: { height: nu
 
 const guideColor: Record<LightId, string> = { key: '#ffd47a', fill: '#9ed4ff', rim: '#d6a8ff' }
 
-function StudioLight({ light, subjectZ, label, isSelected, onSelect, showSpotPoint }: { light: Light; subjectZ: number; label: string; isSelected: boolean; onSelect: () => void; showSpotPoint: boolean }) {
+function StudioLight({ light, subjectZ, label, distanceLabel, isSelected, onSelect, showSpotPoint }: { light: Light; subjectZ: number; label: string; distanceLabel: (value: number) => string; isSelected: boolean; onSelect: () => void; showSpotPoint: boolean }) {
   const aimYaw = Math.atan2(light.x, light.z - subjectZ)
   const lightColor = light.color ?? DEFAULT_COLOR
   const beamColor = isSelected ? guideColor[light.id] : lightColor
@@ -114,7 +124,7 @@ function StudioLight({ light, subjectZ, label, isSelected, onSelect, showSpotPoi
       <mesh><sphereGeometry args={[.15, 12, 12]} /><meshBasicMaterial transparent opacity={0} depthWrite={false} /></mesh>
     </group>
     <Html position={[0, height + .18, -EMITTER_OFFSET]} center zIndexRange={[20, 0]}>
-      <button type="button" className={`light-tag tag-${light.id} ${isSelected ? 'tag-selected' : ''}`} onClick={onSelect}>{label} · {emitterDistance(light, subjectZ).toFixed(1)} m</button>
+      <button type="button" className={`light-tag tag-${light.id} ${isSelected ? 'tag-selected' : ''}`} onClick={onSelect}>{label} · {distanceLabel(emitterDistance(light, subjectZ))} m</button>
     </Html>
   </group>
 }
@@ -136,7 +146,7 @@ function CameraRig({ subjectZ, distance, height, focal }: { subjectZ: number; di
 function BackdropPaper({ backdrop }: { backdrop: Backdrop }) {
   if (!backdrop.visible) return null
   return <mesh receiveShadow position={[0, 2.5, BACKDROP_Z]}>
-    <planeGeometry args={[9, 5]} />
+    <planeGeometry args={[10, 5]} />
     <meshStandardMaterial color={backdrop.color} roughness={1} />
   </mesh>
 }
@@ -230,6 +240,7 @@ function GuideAwareControls() {
 export type StudioProps = {
   lights: Light[]
   labels: Record<LightId, string>
+  formatDistance: (value: number) => string
   subjectZ: number
   subjectRotY: number
   cameraDistance: number
@@ -245,16 +256,16 @@ export type StudioProps = {
 }
 
 export function Studio(props: StudioProps) {
-  const { lights, labels, subjectZ, subjectRotY, cameraDistance, cameraHeight, focalLength, selected, onSelect, showSpotPoint, backdrop, background, previewRef, captureRef } = props
+  const { lights, labels, formatDistance, subjectZ, subjectRotY, cameraDistance, cameraHeight, focalLength, selected, onSelect, showSpotPoint, backdrop, background, previewRef, captureRef } = props
   return <Canvas shadows="percentage" frameloop="demand" camera={{ position: [4.5, 4.2, 4.5], fov: 34 }} dpr={[1, 2]}>
-    <color attach="background" args={['#050608']} />
+    <color attach="background" args={['#020304']} />
     <ambientLight intensity={0.07} />
     <gridHelper args={[10, 20, '#28313c', '#151b22']} position={[0, .01, 0]} ref={onGuideLayer} />
     <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -.02, 0]}><planeGeometry args={[10, 10]} /><meshStandardMaterial color="#090c10" roughness={.94} /></mesh>
     <BackdropPaper backdrop={backdrop} />
     <BackgroundSpot light={background} />
     <group position={[0, 0, subjectZ]}><Venus rotationY={subjectRotY} /></group>
-    {lights.filter(light => light.enabled).map(light => <StudioLight key={light.id} light={light} label={labels[light.id]} subjectZ={subjectZ} isSelected={selected === light.id} onSelect={() => onSelect(light.id)} showSpotPoint={showSpotPoint} />)}
+    {lights.filter(light => light.enabled).map(light => <StudioLight key={light.id} light={light} label={labels[light.id]} distanceLabel={formatDistance} subjectZ={subjectZ} isSelected={selected === light.id} onSelect={() => onSelect(light.id)} showSpotPoint={showSpotPoint} />)}
     <CameraRig subjectZ={subjectZ} distance={cameraDistance} height={cameraHeight} focal={focalLength} />
     <PreviewRenderer canvasRef={previewRef} captureRef={captureRef} subjectZ={subjectZ} cameraDistance={cameraDistance} cameraHeight={cameraHeight} focalLength={focalLength} />
     <GuideAwareControls />

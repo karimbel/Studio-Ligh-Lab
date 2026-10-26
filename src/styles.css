@@ -36,7 +36,8 @@ a { color: var(--accent) }
 .eyebrow { display: block; color: #7f9abf; font: 500 10px var(--mono); letter-spacing: 1.2px; margin-bottom: 5px }
 
 /* ---------- Mise en page ---------- */
-.app { display: grid; grid-template-columns: 276px minmax(420px, 1fr) 330px; height: 100vh; overflow: hidden }
+.app { display: grid; grid-template-columns: 276px minmax(420px, 1fr) 330px; grid-template-rows: minmax(0, 1fr); height: 100vh; height: 100dvh; overflow: hidden }
+@media (min-width: 721px) { html, body { overflow: hidden } }
 aside { background: var(--panel); padding: 24px; overflow: auto; min-height: 0 }
 .library { border-right: 1px solid var(--line); display: flex; flex-direction: column }
 .controls { border-left: 1px solid var(--line); padding: 20px; display: flex; flex-direction: column; gap: 14px }
@@ -115,7 +116,10 @@ aside { background: var(--panel); padding: 24px; overflow: auto; min-height: 0 }
 .tv-subject circle { fill: #e3e7ec; opacity: .9 }
 .tv-subject line { stroke: #0d121a; stroke-width: .06; stroke-linecap: round }
 .tv-light .tv-beam { fill: currentColor; opacity: .14 }
-.tv-handle { fill: #0d121a; stroke: currentColor; stroke-width: .05; cursor: grab; transition: r .15s }
+.tv-handle { fill: #0d121a; stroke: currentColor; stroke-width: .05; cursor: grab }
+/* le plan est mis à l'échelle : un contour de focus classique y deviendrait énorme */
+.topview svg *:focus, .topview svg *:focus-visible { outline: none }
+.tv-handle:focus-visible { stroke: #fff; stroke-width: .07 }
 .tv-handle:hover, .tv-light.is-selected .tv-handle { fill: currentColor }
 .tv-handle.is-dragging { cursor: grabbing }
 .tv-light.is-selected .tv-letter, .tv-handle:hover + .tv-letter { fill: #0d121a }
@@ -190,7 +194,20 @@ fieldset:disabled { opacity: .45 }
 .field { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; align-items: center; margin: 10px 0; color: var(--text-2); font-size: 11px }
 .field > input { grid-column: 1 / -1 }
 .field output { color: var(--accent); font: 500 11px var(--mono) }
-input[type=range] { width: 100%; accent-color: #8ed1ff; margin: 6px 0 0 }
+.range { --fill: 50%; --range: var(--accent); -webkit-appearance: none; appearance: none; width: 100%; height: 18px; margin: 4px 0 0; padding: 0; background: transparent; cursor: pointer }
+.range::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: linear-gradient(90deg, var(--range) var(--fill), #2a3342 var(--fill)) }
+.range::-moz-range-track { height: 4px; border-radius: 2px; background: #2a3342 }
+.range::-moz-range-progress { height: 4px; border-radius: 2px; background: var(--range) }
+.range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; margin-top: -5px; border: 2px solid var(--range); border-radius: 50%; background: #f2f8ff; box-shadow: 0 1px 4px #000a; transition: transform .1s }
+.range::-moz-range-thumb { width: 10px; height: 10px; border: 2px solid var(--range); border-radius: 50%; background: #f2f8ff; box-shadow: 0 1px 4px #000a }
+.range:hover::-webkit-slider-thumb, .range:active::-webkit-slider-thumb { transform: scale(1.15) }
+.range:focus-visible { outline: none }
+.range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px color-mix(in srgb, var(--range) 35%, transparent) }
+.range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 4px color-mix(in srgb, var(--range) 35%, transparent) }
+.light-key .range, .light-key .chip.active { --range: var(--key) }
+.light-rim .range { --range: var(--rim) }
+.light-key .chip.active { background: var(--key); border-color: var(--key) }
+.light-rim .chip.active { background: var(--rim); border-color: var(--rim) }
 input[type=color] { width: 100%; height: 26px; padding: 0; border: 1px solid var(--line-2); border-radius: 6px; background: #1a2230 }
 .field-hint { color: #7f92aa; font-size: 10px; line-height: 1.5 }
 .check { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 11px; color: #c6d5e4 }
