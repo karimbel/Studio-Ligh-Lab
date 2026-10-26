@@ -19,6 +19,9 @@ type Tab = 'subject' | 'key' | 'fill'
 const QUIZ_STARS = 2
 const QUIZ_INTERVAL = 180
 const TIP_INTERVAL = 60_000
+const SOLUTION_DELAY = 180_000 // 3 minutes d'essai…
+const SOLUTION_GESTURES = 8 // …et au moins 8 manipulations
+const SOLUTION_WRONG_ANSWERS = 2 // ou 2 erreurs aux questions du schéma
 
 const emptyCounts = () => Object.fromEntries(setups.map(setup => [setup.id, 0])) as Record<string, number>
 
@@ -58,6 +61,11 @@ export function App() {
   const [challengeActive, setChallengeActive] = useState(true)
   const [solutionShown, setSolutionShown] = useState<Record<string, boolean>>({})
   const lastStart = useRef(0)
+  // la solution se mérite : elle se débloque quand l'élève a vraiment cherché, ou s'il bute sur les questions
+  const [exerciseStartedAt, setExerciseStartedAt] = useState(() => Date.now())
+  const [gestures, setGestures] = useState(0)
+  const [wrongAnswers, setWrongAnswers] = useState<Record<string, number>>({})
+  const [now, setNow] = useState(() => Date.now())
   const [justSolved, setJustSolved] = useState(false)
   const [tip, setTip] = useState<string | null>(null)
   const [tipIndex, setTipIndex] = useState(0)
@@ -127,6 +135,8 @@ export function App() {
     setLights(placeLights(start.lights, subjectZ, start.camera.cameraAngle))
     setChallengeActive(true)
     setJustSolved(false)
+    setExerciseStartedAt(Date.now())
+    setGestures(0)
   }
 
   const apply = (id: string) => {
@@ -184,12 +194,33 @@ export function App() {
     setQuizOpen(true)
   }
   const handleQuizResult = (ok: boolean) => {
+    if (!ok) setWrongAnswers(current => ({ ...current, [activeSetup]: (current[activeSetup] ?? 0) + 1 }))
     if (ok) setQuizStars(current => ({ ...current, [activeSetup]: Math.min(QUIZ_STARS, (current[activeSetup] ?? 0) + 1) }))
     setAnswered(n => n + 1)
   }
 
   // Fin de parcours : une seule ouverture automatique, au moment où tout est complet
   // complet : chaque schéma a ses 3 étoiles, ou sa solution a été consultée
+  // compte les manipulations (un geste = un curseur relâché, une lampe déplacée, un bouton) pendant l'exercice
+  useEffect(() => {
+    if (!challengeActive) return
+    const onGesture = (event: Event) => {
+      const target = event.target as Element | null
+      if (target?.closest('.tab-panel, .topview svg')) setGestures(n => n + 1)
+    }
+    document.addEventListener('pointerup', onGesture, true)
+    document.addEventListener('keyup', onGesture, true)
+    return () => { document.removeEventListener('pointerup', onGesture, true); document.removeEventListener('keyup', onGesture, true) }
+  }, [challengeActive])
+  const solutionUnlocked = !!solutionShown[activeSetup]
+    || (wrongAnswers[activeSetup] ?? 0) >= SOLUTION_WRONG_ANSWERS
+    || (now - exerciseStartedAt >= SOLUTION_DELAY && gestures >= SOLUTION_GESTURES)
+  useEffect(() => {
+    if (!challengeActive || solutionUnlocked) return
+    const id = window.setInterval(() => setNow(Date.now()), 5000)
+    return () => window.clearInterval(id)
+  }, [challengeActive, solutionUnlocked])
+
   const complete = setups.every(s => starsOf(s.id) === 3 || solutionShown[s.id])
   const wasComplete = useRef(complete)
   useEffect(() => {
@@ -201,6 +232,7 @@ export function App() {
     setQuizStars(emptyCounts())
     setChallengeDone({})
     setSolutionShown({})
+    setWrongAnswers({})
     setAnswered(0)
     setEndOpen(false)
     apply(setups[0].id)
@@ -267,7 +299,7 @@ export function App() {
           </div>}
           {!introOpen && <QuizTimer seconds={QUIZ_INTERVAL} paused={modalOpen} stars={starsOf(activeSetup)} finished={(quizStars[activeSetup] ?? 0) >= QUIZ_STARS} locked={!!solutionShown[activeSetup]} onFire={fireQuestion} />}
           <TopView lights={lights} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraAngle={cameraAngle} onCameraMove={setCameraAngle} cameraDistance={cameraDistance} focalLength={focalLength} backdropVisible={backdrop.visible} selected={selected} onSelect={select} onMove={editPolar} />
-          <Diagnostic checks={checks} active={challengeActive} done={!!challengeDone[activeSetup]} justSolved={justSolved} solutionShown={!!solutionShown[activeSetup]} onRestart={startExercise} onShowSolution={showSolution} />
+          <Diagnostic canShowSolution={solutionUnlocked} checks={checks} active={challengeActive} done={!!challengeDone[activeSetup]} justSolved={justSolved} solutionShown={!!solutionShown[activeSetup]} onRestart={startExercise} onShowSolution={showSolution} />
         </div>
       </section>
 

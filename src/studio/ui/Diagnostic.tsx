@@ -9,6 +9,7 @@ type Props = {
   done: boolean // étoile du défi déjà gagnée
   justSolved: boolean
   solutionShown: boolean
+  canShowSolution: boolean // débloquée après de vrais essais
   onRestart: () => void
   onShowSolution: () => void
 }
@@ -21,7 +22,7 @@ const groupIcon: Record<CheckGroup, JSX.Element> = {
 }
 
 /** Compare la scène au rendu recherché, groupe par groupe : seuls les points à corriger restent dépliés. */
-export function Diagnostic({ checks, active, done, justSolved, solutionShown, onRestart, onShowSolution }: Props) {
+export function Diagnostic({ checks, active, done, justSolved, solutionShown, canShowSolution, onRestart, onShowSolution }: Props) {
   const { t } = useI18n()
   const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 720px)').matches)
   const [confirming, setConfirming] = useState(false)
@@ -62,10 +63,11 @@ export function Diagnostic({ checks, active, done, justSolved, solutionShown, on
       </div>
       {!active && solved && !justSolved && <p className="field-hint diag-all-good">{t('diag.allGood')}</p>}
       <div className="diagnostic-actions">
-        {active && !confirming && <div className="diag-buttons">
+        {active && !confirming && <div className={`diag-buttons ${canShowSolution ? '' : 'single'}`}>
           <button type="button" className="ghost-btn" onClick={onRestart}><IconRestart size={14} />{t('diag.restart')}</button>
-          <button type="button" className="ghost-btn solution-btn" onClick={() => solutionShown ? onShowSolution() : setConfirming(true)}><IconEye size={14} />{t('diag.solution')}</button>
+          {canShowSolution && <button type="button" className="ghost-btn solution-btn" onClick={() => solutionShown ? onShowSolution() : setConfirming(true)}><IconEye size={14} />{t('diag.solution')}</button>}
         </div>}
+        {active && !confirming && !canShowSolution && <p className="field-hint diag-locked-note">{t('diag.solutionLocked')}</p>}
         {active && confirming && <div className="diag-confirm" role="alertdialog" aria-label={t('diag.solution')}>
           <p>{t('diag.solutionWarn')}</p>
           <div className="diag-buttons">

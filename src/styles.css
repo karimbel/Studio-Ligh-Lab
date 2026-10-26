@@ -178,6 +178,8 @@ aside::-webkit-scrollbar-track { background: transparent }
 .diag-all-good { margin-top: 8px; color: #bfe9cf }
 .diag-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px }
 .diag-buttons .ghost-btn { padding: 8px 6px; font-size: 10.5px }
+.diag-buttons.single { grid-template-columns: 1fr }
+.diag-locked-note { margin-top: 8px; font-size: 10px; color: #7f92aa }
 .solution-btn { color: #ffd8a8; border-color: #6b5634 }
 .solution-btn:hover { background: #2a2216; border-color: #b08850 }
 .diag-confirm { padding: 10px; border: 1px solid #6b5634; border-radius: 9px; background: rgba(255, 216, 168, .06) }
