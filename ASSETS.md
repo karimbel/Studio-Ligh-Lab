@@ -19,4 +19,8 @@ Le maillage est chargé localement dans le simulateur, pour que les sources prod
 
 ## Images de référence (`src/assets/lighting-references/`)
 
-Une image « rendu recherché » par schéma, converties en WebP (1200 px). Leur origine et leur licence restent à documenter ici.
+Une image « rendu recherché » par schéma (Rembrandt, Butterfly, Loop, Split, Broad, Short, Clamshell).
+
+- Origine : images générées par intelligence artificielle (ChatGPT, OpenAI) pour le projet.
+- Format : converties en WebP (1200 px).
+- Ce ne sont pas des photographies de la Vénus du simulateur : elles illustrent le rendu de chaque schéma sur un buste antique.

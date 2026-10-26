@@ -64,6 +64,7 @@ export function Credits({ onClose }: { onClose: () => void }) {
     <ul className="credits">
       <li><a href="https://doi.org/10.5281/zenodo.10318081" target="_blank" rel="noreferrer">{t('credits.venus')}</a></li>
       <li><a href="https://sketchfab.com/3d-models/canon-eos-60d-ef-85mm-f14l-is-usm-lens-80f7a79909b3492c82e7ebab76f0c93f" target="_blank" rel="noreferrer">{t('credits.camera')}</a></li>
+      <li>{t('credits.references')}</li>
       <li>{t('credits.tech')}</li>
       <li>{t('credits.license')}</li>
     </ul>
