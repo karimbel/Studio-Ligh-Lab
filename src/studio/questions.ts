@@ -26,7 +26,7 @@ export const knowledgeBySetup: Record<string, string[]> = {
   loop: [
     'Loop est un Rembrandt « raccourci » : l’ombre du nez forme une boucle qui ne rejoint pas la joue.',
     'L’angle d’environ 30° du Loop donne un rendu naturel, très facile à photographier.',
-    'En Loop, une ombre courte suit le nez, côté lumière.',
+    'En Loop, l’ombre du nez reste courte et tombe du côté opposé à la source, légèrement vers le bas.',
     'Loop est l’un des schémas les plus flatteurs pour les portraits en général.',
   ],
   split: [
@@ -59,7 +59,7 @@ export const questionsBySetup: Record<string, Question[]> = {
   rembrandt: [
     { id: 'rt1', type: 'bool', question: 'En éclairage Rembrandt, on recherche un petit triangle de lumière sous l’œil opposé à la source.', answer: true, correctFeedback: 'Exact : ce triangle lumineux sous l’œil est la signature du schéma.', wrongFeedback: 'Mauvaise réponse : c’est bien ce triangle sous l’œil opposé qui caractérise Rembrandt.' },
     { id: 'rt2', type: 'single', question: 'À quel angle se place généralement la principale dans un schéma Rembrandt ?', options: ['0° (pile en face)', 'Environ 45°', '90° (perpendiculaire)', '180° (contre-jour)'], answer: 1, correctFeedback: 'Environ 45°, légèrement au-dessus du sujet pour modeler le visage.', wrongFeedback: 'La source Rembrandt se place autour de 45° par rapport à l’axe caméra.' },
-    { id: 'rt3', type: 'single', question: 'Quel modeleur est le plus adapté pour une principale modelante type Rembrandt ?', options: ['Parapluie très diffus', 'Faisceau étroit (Snoot / boîte)', 'Réflecteur très large'], answer: 1, correctFeedback: 'Un faisceau étroit crée la transition d’ombre nette du Rembrandt.', wrongFeedback: 'Le Rembrandt demande un faisceau plutôt étroit pour dessiner le triangle et l’ombre de côté.' },
+    { id: 'rt3', type: 'single', question: 'Qu’est-ce qui crée le triangle lumineux du Rembrandt ?', options: ['Le choix du modeleur', 'La position de la source (≈ 45° et au-dessus des yeux)', 'La puissance de la lampe'], answer: 1, correctFeedback: 'C’est la position de la source qui fait tomber l’ombre du nez sur la joue et dessine le triangle ; le modeleur ne fait que durcir ou adoucir ses bords.', wrongFeedback: 'Le triangle vient de la position de la source : ≈ 45° et au-dessus des yeux, l’ombre du nez rejoint celle de la joue.' },
   ],
   butterfly: [
     { id: 'bt1', type: 'bool', question: 'L’ombre « papillon » sous le nez apparaît quand la source est placée haut et en face du sujet.', answer: true, correctFeedback: 'Correct : source frontale, haute et centrée = ombre papillon.', wrongFeedback: 'Non : l’ombre papillon vient d’une source placée haut et bien en face du sujet.' },
@@ -73,7 +73,7 @@ export const questionsBySetup: Record<string, Question[]> = {
   ],
   split: [
     { id: 'sp1', type: 'bool', question: 'Dans Split, une moitié du visage est éclairée et l’autre reste à l’ombre, avec la source presque à 90°.', answer: true, correctFeedback: 'Correct : la source à 90° divise le visage en deux.', wrongFeedback: 'C’est bien le principe : source à ~90° = visage coupé en deux.' },
-    { id: 'sp2', type: 'single', question: 'Quel modeleur accentue le mieux la coupure franche du Split ?', options: ['Parapluie blanc', 'Grande softbox', 'Faisceau étroit (Stripbox)'], answer: 2, correctFeedback: 'Un faisceau étroit donne une ligne d’ombre nette au milieu du visage.', wrongFeedback: 'Un faisceau étroit (Stripbox) produit la transition franche du Split.' },
+    { id: 'sp2', type: 'single', question: 'Quel modeleur accentue le mieux la coupure franche du Split ?', options: ['Parapluie blanc', 'Grande softbox', 'Source petite et dure (réflecteur nu, snoot)'], answer: 2, correctFeedback: 'Plus la source est petite par rapport au sujet, plus la limite entre lumière et ombre est nette.', wrongFeedback: 'Une source petite et dure donne la transition franche du Split ; les grandes sources (parapluie, softbox) l’adoucissent.' },
     { id: 'sp3', type: 'multiple', question: 'Le schéma Split convient particulièrement pour :', options: ['Un rendu dramatique', 'Adoucir toutes les ombres', 'Éclairer une seule moitié du visage', 'Une source placée autour de 90°'], answer: [0, 2, 3], correctFeedback: 'Dramatique, à 90°, une moitié éclairée : tout est bon !', wrongFeedback: 'Split = source à ~90°, une moitié du visage éclairée, rendu dramatique.' },
   ],
   broad: [
@@ -89,6 +89,6 @@ export const questionsBySetup: Record<string, Question[]> = {
   clamshell: [
     { id: 'cl1', type: 'bool', question: 'Clamshell dispose deux sources « en coquille » : une au-dessus et une sous le visage.', answer: true, correctFeedback: 'Correct : les deux sources forment une coquille autour du visage.', wrongFeedback: 'Non : Clamshell = une source haute et une source plus basse, encadrant le visage.' },
     { id: 'cl2', type: 'single', question: 'Clamshell sert principalement à :', options: ['Lisser les ombres du visage (portrait beauté)', 'Créer des ombres très marquées', 'Éclairer uniquement le fond'], answer: 0, correctFeedback: 'Le double éclairage ouvre les ombres et défait les creux du visage.', wrongFeedback: 'Clamshell est prisé en portrait beauté pour adoucir les ombres.' },
-    { id: 'cl3', type: 'multiple', question: 'Quelles affirmations correspondent au Clamshell ?', options: ['Une source sous le visage', 'Une seule source très haute', 'Ombre papillon fortement atténuée', 'Très utilisé en portrait beauté'], answer: [0, 2, 3], correctFeedback: 'Source basse + prédominance de l’ombre papillon + beauté : bravo !', wrongFeedback: 'Clamshell : source haute + source sous le visage, ombre papillon atténuée, usage beauté.' },
+    { id: 'cl3', type: 'multiple', question: 'Quelles affirmations correspondent au Clamshell ?', options: ['Une source sous le visage', 'Une seule source très haute', 'Ombre papillon fortement atténuée', 'Très utilisé en portrait beauté'], answer: [0, 2, 3], correctFeedback: 'Source sous le visage, ombre papillon atténuée, usage beauté : bravo !', wrongFeedback: 'Clamshell : source haute + source sous le visage, ombre papillon atténuée, usage beauté.' },
   ],
 }
