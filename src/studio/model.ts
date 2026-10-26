@@ -55,6 +55,30 @@ export const azimuthDeg = (light: Light, subjectZ: number) => deg(Math.atan2(lig
 /** Élévation de la tête de lampe vue depuis le buste, en degrés. Négatif = source plus basse que la cible. */
 export const elevationDeg = (light: Light, subjectZ: number) => deg(Math.atan2(lightHeight(light) - lightTargetHeight(light), Math.max(emitterPlanar(light, subjectZ), .01)))
 
+/** La tête de la Vénus est naturellement tournée d'environ 40° vers la droite de l'image (x positif). */
+export const HEAD_TURN = 40
+export const wrapDeg = (degrees: number) => ((degrees % 360) + 540) % 360 - 180
+/** Azimut de la source vu depuis le boîtier : 0° = axe du boîtier, négatif = gauche de l'image. */
+export const relAzimuthDeg = (light: Light, subjectZ: number, cameraAngle: number) => wrapDeg(azimuthDeg(light, subjectZ) - cameraAngle)
+
+/** Fait tourner un point (relatif au sujet) autour de l'axe vertical du sujet. */
+export const rotateXZ = (x: number, z: number, angleDeg: number) => {
+  const a = rad(angleDeg)
+  return { x: x * Math.cos(a) + z * Math.sin(a), z: z * Math.cos(a) - x * Math.sin(a) }
+}
+/** Place un jeu de lampes défini face au boîtier autour du sujet, quelle que soit la position du boîtier. */
+export const placeLights = (lights: Light[], subjectZ: number, cameraAngle: number) => lights.map(light => {
+  const p = rotateXZ(light.x, light.z, cameraAngle)
+  return { ...light, x: p.x, z: p.z + subjectZ }
+})
+
+/** Position et visée du boîtier, qui tourne autour du sujet à distance constante. */
+export const cameraPose = (cameraAngle: number, distance: number, height: number, subjectZ: number) => {
+  const eye = rotateXZ(CAMERA_SHIFT, distance, cameraAngle)
+  const target = rotateXZ(CAMERA_SHIFT, FRAMING_OFFSET, cameraAngle)
+  return { eye: [eye.x, height, eye.z + subjectZ] as const, target: [target.x, height, target.z + subjectZ] as const }
+}
+
 export const polarToXZ = (angleDeg: number, distance: number, subjectZ: number) => ({ x: Math.sin(rad(angleDeg)) * distance, z: subjectZ + Math.cos(rad(angleDeg)) * distance })
 export const clampDistance = (distance: number) => Math.min(MAX_LIGHT_DISTANCE, Math.max(MIN_LIGHT_DISTANCE, distance))
 

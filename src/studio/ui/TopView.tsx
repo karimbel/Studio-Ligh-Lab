@@ -11,19 +11,21 @@ type Props = {
   lights: Light[]
   subjectZ: number
   subjectRotY: number
+  cameraAngle: number
   cameraDistance: number
   focalLength: number
   backdropVisible: boolean
   selected: LightId | null
   onSelect: (id: LightId) => void
   onMove: (id: LightId, angleDeg: number, planarDistance: number) => void
+  onCameraMove: (angleDeg: number) => void
 }
 
 /** Plan du plateau vu de dessus : la caméra est en bas, on fait glisser la tête des lampes. */
-export function TopView({ lights, subjectZ, subjectRotY, cameraDistance, focalLength, backdropVisible, selected, onSelect, onMove }: Props) {
+export function TopView({ lights, subjectZ, subjectRotY, cameraAngle, cameraDistance, focalLength, backdropVisible, selected, onSelect, onMove, onCameraMove }: Props) {
   const { t } = useI18n()
   const svgRef = useRef<SVGSVGElement>(null)
-  const [dragging, setDragging] = useState<LightId | null>(null)
+  const [dragging, setDragging] = useState<LightId | 'camera' | null>(null)
 
   const toPlan = (event: ReactPointerEvent) => {
     const svg = svgRef.current
@@ -41,7 +43,7 @@ export function TopView({ lights, subjectZ, subjectRotY, cameraDistance, focalLe
     onMove(id, angle, e + EMITTER_OFFSET)
   }
 
-  const camY = Math.min(RANGE - .15, cameraDistance - subjectZ)
+  const camY = Math.min(RANGE - .18, cameraDistance)
   const camX = CAMERA_SHIFT
   const fovHalf = Math.atan(18 / focalLength)
   const fovLength = Math.max(.1, camY)
@@ -54,11 +56,37 @@ export function TopView({ lights, subjectZ, subjectRotY, cameraDistance, focalLe
       <circle r={MAX_E} className="tv-zone" />
       <circle r={MIN_E} className="tv-zone-inner" />
       {[1, 2].map(r => <circle key={r} r={r} className="tv-ring" />)}
-      <line x1={0} y1={0} x2={camX} y2={camY} className="tv-axis" />
       {backdropVisible && backdropY > -RANGE && <line x1={-RANGE} x2={RANGE} y1={backdropY} y2={backdropY} className="tv-backdrop" />}
-      {/* caméra et champ de vision */}
+      {/* boîtier et champ de vision : le groupe tourne autour du sujet, on fait glisser le boîtier sur son cercle */}
+      <circle r={camY} className="tv-camera-orbit" />
+      <g transform={`rotate(${-cameraAngle})`}>
+      <line x1={0} y1={0} x2={camX} y2={camY} className="tv-axis" />
       <path d={`M ${camX} ${camY} L ${camX + Math.sin(-fovHalf) * -fovLength} ${camY - Math.cos(fovHalf) * fovLength} L ${camX + Math.sin(fovHalf) * -fovLength} ${camY - Math.cos(fovHalf) * fovLength} Z`} className="tv-fov" />
-      <g transform={`translate(${camX} ${camY})`} className="tv-camera"><rect x={-.17} y={-.09} width={.34} height={.2} rx={.04} /><rect x={-.07} y={-.18} width={.14} height={.1} rx={.02} /></g>
+      <g
+        transform={`translate(${camX} ${camY})`}
+        className={`tv-camera ${dragging === 'camera' ? 'is-dragging' : ''}`}
+        tabIndex={0}
+        role="slider"
+        aria-label={t('subject.orbit')}
+        aria-valuemin={-180}
+        aria-valuemax={180}
+        aria-valuenow={Math.round(cameraAngle)}
+        onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); setDragging('camera') }}
+        onPointerMove={event => {
+          if (dragging !== 'camera') return
+          const point = toPlan(event)
+          if (point) onCameraMove(Math.round(Math.atan2(point.x, point.y) * 180 / Math.PI))
+        }}
+        onPointerUp={event => { event.currentTarget.releasePointerCapture(event.pointerId); setDragging(null) }}
+        onKeyDown={event => {
+          if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') { event.preventDefault(); onCameraMove(cameraAngle - 5) }
+          if (event.key === 'ArrowRight' || event.key === 'ArrowUp') { event.preventDefault(); onCameraMove(cameraAngle + 5) }
+        }}
+      >
+        <circle r={.26} className="tv-camera-hit" />
+        <rect x={-.17} y={-.09} width={.34} height={.2} rx={.04} /><rect x={-.07} y={-.18} width={.14} height={.1} rx={.02} />
+      </g>
+      </g>
       {/* sujet */}
       <g className="tv-subject">
         <circle r={.24} />

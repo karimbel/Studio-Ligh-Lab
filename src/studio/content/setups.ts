@@ -13,7 +13,7 @@ export type Range = [number, number]
 /** Ce que l'élève doit obtenir pour réussir le défi. Les angles sont mesurés par rapport à l'axe caméra. */
 export type ChallengeSpec = {
   keyAzimuth: Range // valeur absolue, en degrés
-  keySide?: 'left' | 'right' // côté de l'image (gauche = x négatif)
+  keySide?: 'broad' | 'short' // côté du visage à éclairer, selon son orientation face au boîtier
   keyElevation: Range
   fillRatio: Range // remplissage / principale
   fillAzimuth?: Range
@@ -78,7 +78,7 @@ export const setups: Setup[] = [
     description: { fr: 'La partie la plus visible du visage reçoit la lumière.', en: 'The side of the face turned towards the camera gets the light.' },
     lights: [key(-3.2, 2.2), fill(2, 1), rim()],
     reference: broadReference,
-    challenge: { keyAzimuth: [40, 70], keySide: 'left', keyElevation: [25, 55], fillRatio: [.1, .5] },
+    challenge: { keyAzimuth: [40, 70], keySide: 'broad', keyElevation: [25, 55], fillRatio: [.1, .5] },
   },
   {
     id: 'short',
@@ -86,7 +86,7 @@ export const setups: Setup[] = [
     description: { fr: 'La partie la moins visible du visage est éclairée, pour plus de volume.', en: 'The side of the face turned away from the camera is lit, for more depth.' },
     lights: [key(3.2, 2.2), fill(-2, 1), rim()],
     reference: shortReference,
-    challenge: { keyAzimuth: [40, 70], keySide: 'right', keyElevation: [25, 55], fillRatio: [.1, .5] },
+    challenge: { keyAzimuth: [40, 70], keySide: 'short', keyElevation: [25, 55], fillRatio: [.1, .5] },
   },
   {
     id: 'clamshell',

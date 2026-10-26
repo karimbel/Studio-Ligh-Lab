@@ -10,6 +10,7 @@ export const backdropColors: { id: string; key: TKey; value: string }[] = [
 ]
 
 type Props = {
+  cameraAngle: number; setCameraAngle: (v: number) => void
   cameraDistance: number; setCameraDistance: (v: number) => void
   cameraHeight: number; setCameraHeight: (v: number) => void
   focalLength: number; setFocalLength: (v: number) => void
@@ -23,6 +24,7 @@ export function SubjectPanel(p: Props) {
   const { t, num } = useI18n()
   return <div className="subject-panel">
     <div className="field-group">{t('subject.camera')}</div>
+    <label className="field">{t('subject.orbit')} <output>{p.cameraAngle}°</output><Range min="-180" max="180" step="1" value={p.cameraAngle} onChange={e => p.setCameraAngle(+e.target.value)} /></label>
     <label className="field">{t('subject.distance')} <output>{num(p.cameraDistance)} m</output><Range min="1.5" max="4" step=".1" value={p.cameraDistance} onChange={e => p.setCameraDistance(+e.target.value)} /></label>
     <label className="field">{t('subject.height')} <output>{num(p.cameraHeight)} m</output><Range min="0.6" max="2.2" step=".1" value={p.cameraHeight} onChange={e => p.setCameraHeight(+e.target.value)} /></label>
     <label className="field">{t('subject.focal')} <output>{p.focalLength} mm</output><Range min="24" max="200" step="1" value={p.focalLength} onChange={e => p.setFocalLength(+e.target.value)} /></label>

@@ -3,7 +3,7 @@ import { Studio, type Backdrop, type BackgroundLight, type CaptureFn } from './s
 import { challengeStart, setups } from './content/setups'
 import { knowledgeBySetup, questionsBySetup, type Question } from './content/questions'
 import { evaluate, isSolved } from './challenge'
-import { DEFAULT_CAMERA_DISTANCE, DEFAULT_CAMERA_HEIGHT, DEFAULT_COLOR, DEFAULT_FOCAL, clampDistance, polarToXZ, type Light, type LightId } from './model'
+import { DEFAULT_CAMERA_DISTANCE, DEFAULT_CAMERA_HEIGHT, DEFAULT_COLOR, DEFAULT_FOCAL, HEAD_TURN, clampDistance, placeLights, polarToXZ, wrapDeg, type Light, type LightId } from './model'
 import { I18nProvider, detectLang, makeTranslator, type Lang } from './i18n'
 import { loadProgress, saveProgress } from './storage'
 import { LightPanel, RatioMeter } from './ui/LightPanel'
@@ -21,7 +21,6 @@ const QUIZ_INTERVAL = 180
 const TIP_INTERVAL = 60_000
 
 const emptyCounts = () => Object.fromEntries(setups.map(setup => [setup.id, 0])) as Record<string, number>
-const shift = (lights: Light[], subjectZ: number) => lights.map(light => ({ ...light, z: light.z + subjectZ }))
 
 export function App() {
   const saved = useMemo(loadProgress, [])
@@ -34,6 +33,8 @@ export function App() {
   const [lights, setLights] = useState<Light[]>(setups[0].lights)
   const [subjectZ, setSubjectZ] = useState(0)
   const [subjectRotY, setSubjectRotY] = useState(0)
+  const [cameraAngle, setCameraAngleRaw] = useState(0)
+  const setCameraAngle = (angle: number) => setCameraAngleRaw(Math.round(wrapDeg(angle)))
   const [cameraDistance, setCameraDistance] = useState(DEFAULT_CAMERA_DISTANCE)
   const [cameraHeight, setCameraHeight] = useState(DEFAULT_CAMERA_HEIGHT)
   const [focalLength, setFocalLength] = useState(DEFAULT_FOCAL)
@@ -114,7 +115,7 @@ export function App() {
 
   const apply = (id: string) => {
     const preset = setups.find(s => s.id === id)!
-    setLights(shift(preset.lights, subjectZ))
+    setLights(placeLights(preset.lights, subjectZ, cameraAngle))
     setActiveSetup(id)
     setChallengeActive(false)
     setJustSolved(false)
@@ -123,10 +124,10 @@ export function App() {
   }
 
   // Défi
-  const checks = useMemo(() => evaluate(setup.challenge, lights, subjectZ), [setup, lights, subjectZ])
+  const checks = useMemo(() => evaluate(setup.challenge, lights, subjectZ, { cameraAngle, faceYaw: HEAD_TURN + subjectRotY }), [setup, lights, subjectZ, cameraAngle, subjectRotY])
   const solved = isSolved(checks)
   const startChallenge = () => {
-    setLights(shift(challengeStart(), subjectZ))
+    setLights(placeLights(challengeStart(), subjectZ, cameraAngle))
     setChallengeActive(true)
     setJustSolved(false)
     setTip(null)
@@ -197,7 +198,7 @@ export function App() {
     { id: 'key', icon: <IconKey />, on: key.enabled },
     { id: 'fill', icon: <IconFill />, on: fill.enabled || rim.enabled },
   ]
-  const panelProps = (light: Light) => ({ light, subjectZ, onEdit: (patch: Partial<Light>) => editLight(light.id, patch), onPolar: (angle: number, distance: number) => editPolar(light.id, angle, distance), showSpotPoint, setShowSpotPoint })
+  const panelProps = (light: Light) => ({ light, subjectZ, onEdit: (patch: Partial<Light>) => editLight(light.id, patch), onPolar: (angle: number, distance: number) => editPolar(light.id, angle + cameraAngle, distance), cameraAngle, showSpotPoint, setShowSpotPoint })
 
   return <I18nProvider value={i18n}>
     <main className="app">
@@ -237,14 +238,14 @@ export function App() {
           </div>
         </div>
         <div className="stage">
-          <Studio lights={lights} labels={labels} formatDistance={value => i18n.num(value)} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraDistance={cameraDistance} cameraHeight={cameraHeight} focalLength={focalLength} selected={selected} onSelect={select} showSpotPoint={showSpotPoint} backdrop={backdrop} background={background} previewRef={previewRef} captureRef={captureRef} />
+          <Studio lights={lights} labels={labels} formatDistance={value => i18n.num(value)} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraAngle={cameraAngle} cameraDistance={cameraDistance} cameraHeight={cameraHeight} focalLength={focalLength} selected={selected} onSelect={select} showSpotPoint={showSpotPoint} backdrop={backdrop} background={background} previewRef={previewRef} captureRef={captureRef} />
           {tip && <div className="info-pop" role="note">
             <div className="info-pop-head"><span className="eyebrow">{t('tip.eyebrow')} • {l(setup.label).toUpperCase()}</span><button type="button" className="info-close" onClick={() => setTip(null)} aria-label={t('common.close')}>×</button></div>
             {setup.reference && <figure className="lighting-reference"><img src={setup.reference} alt={t('tip.alt', { label: l(setup.label) })} /><figcaption>{t('tip.reference')}</figcaption></figure>}
             <p>{tip}</p>
           </div>}
           {!introOpen && <QuizTimer seconds={QUIZ_INTERVAL} paused={modalOpen} stars={starsOf(activeSetup)} finished={(quizStars[activeSetup] ?? 0) >= QUIZ_STARS} onFire={fireQuestion} />}
-          <TopView lights={lights} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraDistance={cameraDistance} focalLength={focalLength} backdropVisible={backdrop.visible} selected={selected} onSelect={select} onMove={editPolar} />
+          <TopView lights={lights} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraAngle={cameraAngle} onCameraMove={setCameraAngle} cameraDistance={cameraDistance} focalLength={focalLength} backdropVisible={backdrop.visible} selected={selected} onSelect={select} onMove={editPolar} />
           <Diagnostic checks={checks} active={challengeActive} done={!!challengeDone[activeSetup]} justSolved={justSolved} onStart={startChallenge} onAbandon={() => apply(activeSetup)} />
         </div>
       </section>
@@ -258,7 +259,7 @@ export function App() {
           </button>)}
         </div>
         <div className="tab-panel" role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-          {tab === 'subject' && <SubjectPanel cameraDistance={cameraDistance} setCameraDistance={setCameraDistance} cameraHeight={cameraHeight} setCameraHeight={setCameraHeight} focalLength={focalLength} setFocalLength={setFocalLength} subjectZ={subjectZ} setSubjectZ={moveSubject} subjectRotY={subjectRotY} setSubjectRotY={setSubjectRotY} backdrop={backdrop} setBackdrop={setBackdrop} background={background} setBackground={setBackground} />}
+          {tab === 'subject' && <SubjectPanel cameraAngle={cameraAngle} setCameraAngle={setCameraAngle} cameraDistance={cameraDistance} setCameraDistance={setCameraDistance} cameraHeight={cameraHeight} setCameraHeight={setCameraHeight} focalLength={focalLength} setFocalLength={setFocalLength} subjectZ={subjectZ} setSubjectZ={moveSubject} subjectRotY={subjectRotY} setSubjectRotY={setSubjectRotY} backdrop={backdrop} setBackdrop={setBackdrop} background={background} setBackground={setBackground} />}
           {tab === 'key' && <>
             <LightPanel {...panelProps(key)} />
             <p className="field-hint panel-foot">{t('light.hint')}</p>

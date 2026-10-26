@@ -1,4 +1,4 @@
-import { azimuthDeg, elevationDeg, emitterPlanar, fillRatio, lightHeight, lightTargetHeight, type Light } from './model'
+import { HEAD_TURN, relAzimuthDeg, wrapDeg, elevationDeg, emitterPlanar, fillRatio, lightHeight, lightTargetHeight, type Light } from './model'
 import type { ChallengeSpec, Range } from './content/setups'
 
 export type CheckId = 'keyAngle' | 'keyHeight' | 'fill' | 'fillPlacement' | 'rim'
@@ -18,7 +18,16 @@ function heightHint(light: Light, subjectZ: number, range: Range, prefix: 'key' 
   return { key: `hint.${prefix}${delta > 0 ? 'Up' : 'Down'}`, vars: { cm: roundTo(Math.abs(delta) * 100, 5) } }
 }
 
-export function evaluate(spec: ChallengeSpec, lights: Light[], subjectZ: number): Check[] {
+/** Point de vue : position du boîtier autour du sujet et orientation du visage (degrés). */
+export type View = { cameraAngle: number; faceYaw: number }
+const frontView: View = { cameraAngle: 0, faceYaw: HEAD_TURN }
+
+export function evaluate(spec: ChallengeSpec, lights: Light[], subjectZ: number, view: View = frontView): Check[] {
+  const azimuthDeg = (light: Light, z: number) => relAzimuthDeg(light, z, view.cameraAngle)
+  // visage tourné vers la droite de l'image (> 0) : son côté large (broad) est à gauche
+  const faceTurn = wrapDeg(view.faceYaw - view.cameraAngle)
+  const keySide = !spec.keySide || Math.abs(faceTurn) < 8 ? undefined
+    : (spec.keySide === 'broad') === (faceTurn > 0) ? 'left' : 'right'
   const key = lights.find(l => l.id === 'key')
   const fill = lights.find(l => l.id === 'fill')
   const rim = lights.find(l => l.id === 'rim')
@@ -31,8 +40,8 @@ export function evaluate(spec: ChallengeSpec, lights: Light[], subjectZ: number)
     const az = azimuthDeg(key, subjectZ)
     const side = az < 0 ? 'left' : 'right'
     const abs = Math.abs(az)
-    if (spec.keySide && abs > 3 && side !== spec.keySide) {
-      checks.push({ id: 'keyAngle', ok: false, hint: { key: spec.keySide === 'left' ? 'hint.keyToLeft' : 'hint.keyToRight' } })
+    if (keySide && abs > 3 && side !== keySide) {
+      checks.push({ id: 'keyAngle', ok: false, hint: { key: keySide === 'left' ? 'hint.keyToLeft' : 'hint.keyToRight' } })
     } else if (abs < spec.keyAzimuth[0]) {
       checks.push({ id: 'keyAngle', ok: false, hint: { key: 'hint.keyWider', vars: { deg: roundTo(mid(spec.keyAzimuth) - abs, 5) } } })
     } else if (abs > spec.keyAzimuth[1]) {

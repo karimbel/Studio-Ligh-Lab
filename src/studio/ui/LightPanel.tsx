@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n'
 import { Range } from './Range'
 import {
-  DEFAULT_COLOR, MAX_LIGHT_DISTANCE, MIN_LIGHT_DISTANCE, azimuthDeg, beamAngleOf, emitterDistance, lightHeight, modifiers, penumbraOf, planarDistance, shadowDensityOf,
+  DEFAULT_COLOR, MAX_LIGHT_DISTANCE, MIN_LIGHT_DISTANCE, relAzimuthDeg, beamAngleOf, emitterDistance, lightHeight, modifiers, penumbraOf, planarDistance, shadowDensityOf,
   fillRatio, lightingRatio, ratioStops, type Light,
 } from '../model'
 
@@ -13,6 +13,7 @@ type Props = {
   showSpotPoint: boolean
   setShowSpotPoint: (value: boolean) => void
   compact?: boolean
+  cameraAngle: number
 }
 
 export function Switch({ checked, onChange, label }: { checked: boolean; onChange: (value: boolean) => void; label: string }) {
@@ -23,10 +24,11 @@ export function Switch({ checked, onChange, label }: { checked: boolean; onChang
   </label>
 }
 
-export function LightPanel({ light, subjectZ, onEdit, onPolar, showSpotPoint, setShowSpotPoint, compact }: Props) {
+export function LightPanel({ light, subjectZ, onEdit, onPolar, showSpotPoint, setShowSpotPoint, compact, cameraAngle }: Props) {
   const { t, num } = useI18n()
   const planar = planarDistance(light, subjectZ)
-  const angle = Math.round(azimuthDeg(light, subjectZ))
+  // angle mesuré depuis le boîtier : 0° = dans l'axe de l'appareil
+  const angle = Math.round(relAzimuthDeg(light, subjectZ, cameraAngle))
   const beamAngle = beamAngleOf(light, subjectZ)
   const side = Math.abs(angle) < 3 ? t('light.axis') : angle < 0 ? t('light.left') : t('light.right')
 

@@ -6,7 +6,7 @@ import { clone as cloneSkeleton } from 'three/examples/jsm/utils/SkeletonUtils.j
 import venusModel from '../../assets/53082b5d6cef4c34a9701a2a24f58075.glb'
 import {
   BACKDROP_Z, CAMERA_SHIFT, DEFAULT_COLOR, EMITTER_OFFSET, FRAMING_OFFSET, SUBJECT_HEIGHT, VENUS_NATIVE_HEIGHT,
-  beamAngleOf, emitterDistance, lightHeight, lightTargetHeight, penumbraOf, planarDistance, shadowDensityOf, shadowRadiusOf, subjectIllumination,
+  beamAngleOf, cameraPose, emitterDistance, lightHeight, lightTargetHeight, penumbraOf, planarDistance, shadowDensityOf, shadowRadiusOf, subjectIllumination,
   type Light, type LightId,
 } from '../model'
 
@@ -129,18 +129,18 @@ function StudioLight({ light, subjectZ, label, distanceLabel, isSelected, onSele
   </group>
 }
 
-function CameraRig({ subjectZ, distance, height, focal }: { subjectZ: number; distance: number; height: number; focal: number }) {
-  const frameDepth = distance - (subjectZ + FRAMING_OFFSET)
+function CameraRig({ subjectZ, angle, distance, height, focal }: { subjectZ: number; angle: number; distance: number; height: number; focal: number }) {
+  const frameDepth = distance - FRAMING_OFFSET
   const halfWidth = frameDepth * .036 / (2 * (focal / 1000))
   const halfHeight = frameDepth * .024 / (2 * (focal / 1000))
   const top = .55 + halfHeight
   const bottom = .55 - halfHeight
-  return <group position={[CAMERA_SHIFT, height - .55, distance]} ref={onGuideLayer}>
+  return <group position={[0, 0, subjectZ]} rotation={[0, angle * Math.PI / 180, 0]}><group position={[CAMERA_SHIFT, height - .55, distance]} ref={onGuideLayer}>
     <group position={[0, .45, 0]} rotation={[0, Math.PI, 0]}><CameraProp /></group>
     <Line points={[[0, .55, -.25], [0, .55, -frameDepth]]} color="#7fc9f3" transparent opacity={.62} />
     <Line points={[[-halfWidth, top, -frameDepth], [halfWidth, top, -frameDepth], [halfWidth, bottom, -frameDepth], [-halfWidth, bottom, -frameDepth], [-halfWidth, top, -frameDepth]]} color="#7fc9f3" transparent opacity={.55} />
     {[[-halfWidth, top], [halfWidth, top], [halfWidth, bottom], [-halfWidth, bottom]].map(([x, y], i) => <Line key={i} points={[[0, .55, -.25], [x, y, -frameDepth]]} color="#7fc9f3" transparent opacity={.3} />)}
-  </group>
+  </group></group>
 }
 
 function BackdropPaper({ backdrop }: { backdrop: Backdrop }) {
@@ -163,7 +163,7 @@ function BackgroundSpot({ light }: { light: BackgroundLight }) {
   </group>
 }
 
-function PreviewRenderer({ canvasRef, captureRef, subjectZ, cameraDistance, cameraHeight, focalLength }: { canvasRef: RefObject<HTMLCanvasElement | null>; captureRef: MutableRefObject<CaptureFn | null>; subjectZ: number; cameraDistance: number; cameraHeight: number; focalLength: number }) {
+function PreviewRenderer({ canvasRef, captureRef, subjectZ, cameraAngle, cameraDistance, cameraHeight, focalLength }: { canvasRef: RefObject<HTMLCanvasElement | null>; captureRef: MutableRefObject<CaptureFn | null>; subjectZ: number; cameraAngle: number; cameraDistance: number; cameraHeight: number; focalLength: number }) {
   const scene = useThree(state => state.scene)
   const camera = useMemo(() => new PerspectiveCamera(16, 3 / 2, .5, 40), [])
   const invalidate = useThree(state => state.invalidate)
@@ -184,8 +184,9 @@ function PreviewRenderer({ canvasRef, captureRef, subjectZ, cameraDistance, came
     camera.fov = 2 * Math.atan(0.024 / (2 * (focalLength / 1000))) * 180 / Math.PI
     camera.aspect = aspect
     camera.updateProjectionMatrix()
-    camera.position.set(CAMERA_SHIFT, cameraHeight, cameraDistance)
-    camera.lookAt(CAMERA_SHIFT, cameraHeight, subjectZ + FRAMING_OFFSET)
+    const pose = cameraPose(cameraAngle, cameraDistance, cameraHeight, subjectZ)
+    camera.position.set(...pose.eye)
+    camera.lookAt(...pose.target)
   }
 
   useEffect(() => {
@@ -243,6 +244,7 @@ export type StudioProps = {
   formatDistance: (value: number) => string
   subjectZ: number
   subjectRotY: number
+  cameraAngle: number
   cameraDistance: number
   cameraHeight: number
   focalLength: number
@@ -256,7 +258,7 @@ export type StudioProps = {
 }
 
 export function Studio(props: StudioProps) {
-  const { lights, labels, formatDistance, subjectZ, subjectRotY, cameraDistance, cameraHeight, focalLength, selected, onSelect, showSpotPoint, backdrop, background, previewRef, captureRef } = props
+  const { lights, labels, formatDistance, subjectZ, subjectRotY, cameraAngle, cameraDistance, cameraHeight, focalLength, selected, onSelect, showSpotPoint, backdrop, background, previewRef, captureRef } = props
   return <Canvas shadows="percentage" frameloop="demand" camera={{ position: [4.5, 4.2, 4.5], fov: 34 }} dpr={[1, 2]}>
     <color attach="background" args={['#020304']} />
     <ambientLight intensity={0.07} />
@@ -266,8 +268,8 @@ export function Studio(props: StudioProps) {
     <BackgroundSpot light={background} />
     <group position={[0, 0, subjectZ]}><Venus rotationY={subjectRotY} /></group>
     {lights.filter(light => light.enabled).map(light => <StudioLight key={light.id} light={light} label={labels[light.id]} distanceLabel={formatDistance} subjectZ={subjectZ} isSelected={selected === light.id} onSelect={() => onSelect(light.id)} showSpotPoint={showSpotPoint} />)}
-    <CameraRig subjectZ={subjectZ} distance={cameraDistance} height={cameraHeight} focal={focalLength} />
-    <PreviewRenderer canvasRef={previewRef} captureRef={captureRef} subjectZ={subjectZ} cameraDistance={cameraDistance} cameraHeight={cameraHeight} focalLength={focalLength} />
+    <CameraRig subjectZ={subjectZ} angle={cameraAngle} distance={cameraDistance} height={cameraHeight} focal={focalLength} />
+    <PreviewRenderer canvasRef={previewRef} captureRef={captureRef} subjectZ={subjectZ} cameraAngle={cameraAngle} cameraDistance={cameraDistance} cameraHeight={cameraHeight} focalLength={focalLength} />
     <GuideAwareControls />
   </Canvas>
 }

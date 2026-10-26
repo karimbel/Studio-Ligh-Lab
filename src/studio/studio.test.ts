@@ -5,7 +5,7 @@ import { challengeStart, setups } from './content/setups'
 import { knowledgeBySetup, questionsBySetup } from './content/questions'
 import { evaluate, isSolved } from './challenge'
 import { dictionaries } from './i18n'
-import { azimuthDeg, elevationDeg, fillRatio, fittedBeamAngle, polarToXZ, type Light } from './model'
+import { HEAD_TURN, azimuthDeg, cameraPose, elevationDeg, fillRatio, fittedBeamAngle, placeLights, polarToXZ, type Light } from './model'
 
 describe('schémas et défi', () => {
   it.each(setups.map(s => [s.id, s] as const))('le preset %s réussit son propre défi', (_, setup) => {
@@ -22,6 +22,29 @@ describe('schémas et défi', () => {
     for (const setup of setups) {
       const moved = setup.lights.map(light => ({ ...light, z: light.z - 1.25 }))
       expect(isSolved(evaluate(setup.challenge, moved, -1.25))).toBe(true)
+    }
+  })
+
+  it.each([-120, -45, 30, 90, 180])('les presets réussissent leur défi quand le boîtier a tourné de %s°', angle => {
+    for (const setup of setups) {
+      const placed = placeLights(setup.lights, 0, angle)
+      // le visage tourne avec le boîtier pour garder le même point de vue
+      expect(isSolved(evaluate(setup.challenge, placed, 0, { cameraAngle: angle, faceYaw: HEAD_TURN + angle })), `${setup.id} @ ${angle}°`).toBe(true)
+    }
+  })
+
+  it('broad et short s’inversent quand le visage se tourne de l’autre côté', () => {
+    const broad = setups.find(s => s.id === 'broad')!
+    const short = setups.find(s => s.id === 'short')!
+    const facingLeft = { cameraAngle: 0, faceYaw: -HEAD_TURN }
+    expect(isSolved(evaluate(broad.challenge, broad.lights, 0, facingLeft))).toBe(false)
+    expect(isSolved(evaluate(broad.challenge, short.lights, 0, facingLeft))).toBe(true)
+  })
+
+  it('le boîtier tourne autour du sujet à distance constante', () => {
+    for (const angle of [0, 60, -150]) {
+      const { eye } = cameraPose(angle, 2.5, 1.7, -1)
+      expect(Math.hypot(eye[0], eye[2] + 1)).toBeCloseTo(Math.hypot(.1, 2.5), 5)
     }
   })
 

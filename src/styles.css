@@ -118,7 +118,12 @@ aside::-webkit-scrollbar-track { background: transparent }
 .tv-axis { stroke: #7fc9f3; stroke-width: .02; stroke-dasharray: .08 .06; opacity: .6 }
 .tv-backdrop { stroke: #5b6068; stroke-width: .06 }
 .tv-fov { fill: rgba(127, 201, 243, .08); stroke: rgba(127, 201, 243, .4); stroke-width: .015 }
-.tv-camera rect { fill: #7fc9f3 }
+.tv-camera { cursor: grab; outline: none }
+.tv-camera rect { fill: #7fc9f3; transition: fill .15s }
+.tv-camera:hover rect, .tv-camera.is-dragging rect, .tv-camera:focus-visible rect { fill: #e4f4ff }
+.tv-camera.is-dragging { cursor: grabbing }
+.tv-camera-hit { fill: transparent }
+.tv-camera-orbit { fill: none; stroke: rgba(127, 201, 243, .28); stroke-width: .02; stroke-dasharray: .1 .07 }
 .tv-subject circle { fill: #e3e7ec; opacity: .9 }
 .tv-subject line { stroke: #0d121a; stroke-width: .06; stroke-linecap: round }
 .tv-light .tv-beam { fill: currentColor; opacity: .14 }
