@@ -1,4 +1,4 @@
-# Ressources 3D
+# Ressources
 
 ## Vénus de Milo
 
@@ -11,7 +11,12 @@ Le maillage est chargé localement dans le simulateur, pour que les sources prod
 
 ## Canon EOS 60D + EF 85mm f/1.4L IS USM Lens
 
-- Fichier : `src/assets/canon_eos_60d__ef_85mm_f1.4l_is_usm_lens/scene.gltf`
+- Fichier : `public/models/canon_eos_60d__ef_85mm_f1.4l_is_usm_lens/scene.gltf`
 - Source : [Sketchfab](https://sketchfab.com/3d-models/canon-eos-60d-ef-85mm-f14l-is-usm-lens-80f7a79909b3492c82e7ebab76f0c93f)
 - Auteur : Loïc ALIX
-- Licence : CC BY 4.0.
+- Licence : CC BY 4.0 (attribution affichée dans l'application, menu « Crédits »).
+- Modification : textures réduites de 4096 à 1024 px (l'appareil ne mesure que quelques centimètres à l'écran).
+
+## Images de référence (`src/assets/lighting-references/`)
+
+Une image « rendu recherché » par schéma, converties en WebP (1200 px). Leur origine et leur licence restent à documenter ici.

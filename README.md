@@ -1,8 +1,8 @@
 # Studio Light Lab
 
-Apprenez les principaux schémas d'éclairage photographique en explorant un plateau virtuel en 3D : placez votre caméra, positionnez votre sujet, composez la lumière, puis observez le résultat comme si vous étiez derrière l'appareil. Et prenez même une photo de rendu !
+Apprenez les principaux schémas d'éclairage photographique en explorant un plateau virtuel en 3D : placez votre caméra, positionnez votre sujet, composez la lumière, puis observez le résultat comme si vous étiez derrière l'appareil.
 
-Learn the key photographic lighting patterns by exploring a virtual 3D stage: place your camera, position your subject, shape the light, then see the result as if you were behind the lens. You can even take a render photo!
+Learn the key photographic lighting patterns by exploring a virtual 3D stage: place your camera, position your subject, shape the light, then see the result as if you were behind the lens.
 
 ![Studio Light Lab](screenshot.png)
 
@@ -12,34 +12,41 @@ Learn the key photographic lighting patterns by exploring a virtual 3D stage: pl
 
 ### Qu'est-ce que c'est ?
 
-Studio Light Lab est une simulation e-learning. Vous explorez librement les schémas de lumière classiques du portrait : **Rembrandt, Butterfly, Loop, Split, Broad, Short et Clamshell**.
+Studio Light Lab est une simulation e-learning. Vous explorez les schémas de lumière classiques du portrait : **Rembrandt, Butterfly, Loop, Split, Broad, Short, Clamshell et Trois points**.
 
 ### Comment l'utiliser ?
 
-1. **Choisissez un schéma** de lumière dans la colonne de gauche (Rembrandt, Butterfly, Loop, Split…).
-2. **Étape 1 — Cadrage** : réglez la position de Vénus (avancer/reculer, orientation) et votre boîtier (distance, hauteur, focale).
-3. **Étape 2 — Sources lumineuses** : ouvrez la principale et le remplissage, ajustez angle, distance, hauteur, puissance, modeleur et même la couleur.
-4. **Aperçu** : gardez un œil en direct dans l'aperçu et cliquez sur **« Prendre une photo »** pour télécharger le rendu (1920 × 1280).
-5. **Questions** : toutes les 3 minutes, une question liée au schéma en cours (oui/non, choix unique ou multiple). Une bonne réponse éclaire une **étoile** — 3 étoiles par schéma. Les questions s'arrêtent à 3 bonnes réponses.
-6. **Le saviez-vous ?** : de petites infos pédagogiques apparaissent en haut à gauche de la scène tout au long du parcours.
+1. **Choisissez un schéma** dans la liste : les lampes se placent comme dans un vrai studio.
+2. **Onglet Sujet** : réglez le boîtier (distance, hauteur, focale), la position de la Vénus et le fond (teinte, lumière de fond).
+3. **Onglets Principale et Remplissage** : modeleur, angle, distance, hauteur, puissance, couleur. Le contre-jour se règle dans l'onglet Remplissage. Vous pouvez aussi **faire glisser les lampes sur le plan** vu de dessus, en bas à gauche de la scène.
+4. **Relevez le défi** : les lampes sont déplacées, à vous de reconstruire le schéma. Le **diagnostic** vérifie en direct l'angle et la hauteur de la principale, le dosage du remplissage (et le contre-jour quand il le faut), et donne des conseils chiffrés (« montez la principale d'environ 30 cm »). Réussite = **1 étoile**, et la photo rejoint votre planche contact.
+5. **Questions** : toutes les 3 minutes, ou tout de suite avec « Question maintenant ». Deux bonnes réponses = **2 étoiles**.
+6. **Aperçu** : comparez votre rendu au rendu recherché avec le curseur « Comparer », et prenez des photos (1920 × 1280) qui s'ajoutent à la **planche contact**, d'où vous pouvez les télécharger.
 
-**Résultats** : le bloc « Résultats » dans la colonne de gauche s'affiche dès la première réponse. La fenêtre de **fin de parcours** s'ouvre automatiquement quand les 7 schémas ont leurs 3 étoiles (21/21).
+À savoir :
+- Le faisceau de chaque lampe s'ajuste automatiquement pour envelopper le buste. Le **modeleur règle la douceur** : snoot et réflecteur donnent des ombres nettes, softbox et parapluie des ombres fondues.
+- Le **ratio d'éclairage** (onglet Remplissage) indique le contraste entre le côté éclairé et le côté à l'ombre.
+- La progression (étoiles) et la langue sont **sauvegardées** dans le navigateur. Les photos sont conservées le temps de la session.
+- L'interface est disponible en **français et en anglais**, et s'adapte à la tablette et au mobile.
+
+La fenêtre de **bilan** s'ouvre automatiquement quand les 8 schémas ont leurs 3 étoiles (24/24), et reste accessible depuis « Voir mes résultats ».
 
 ### Lancer le projet
 
-**Option A — Démo déjà construite (aucune installation)**
-Ouvrez `index.html` du dossier `dist/` derrière un petit serveur statique, ou hébergez le dossier `dist/` sur n'importe quel hébergement statique (Netlify, Vercel, GitHub Pages, nginx…). Pour GitHub Pages, un workflow `.github/workflows/deploy.yml` est inclus : poussez sur `main` et activez Pages (Source : GitHub Actions).
+**Option A — Version en ligne ou statique**
+Le workflow `.github/workflows/deploy.yml` teste, construit et publie le site sur GitHub Pages à chaque push sur `main` (Source : GitHub Actions). Vous pouvez aussi lancer `npm run build` et héberger le dossier `dist/` sur n'importe quel hébergement statique.
 
 **Option B — Développement avec Docker**
 ```bash
 docker compose up --build
 ```
-Puis ouvrez http://localhost:5173.
+Puis ouvrez http://localhost:5174.
 
 **Option C — Développement sans Docker**
 ```bash
 npm install
-npm run dev
+npm run dev     # http://localhost:5173
+npm test        # tests (schémas, défi, traductions, contenus)
 ```
 
 ---
@@ -48,43 +55,51 @@ npm run dev
 
 ### What is it?
 
-Studio Light Lab is an e-learning simulation. You freely explore the classic portrait lighting patterns: **Rembrandt, Butterfly, Loop, Split, Broad, Short and Clamshell**.
+Studio Light Lab is an e-learning simulation. You explore the classic portrait lighting patterns: **Rembrandt, Butterfly, Loop, Split, Broad, Short, Clamshell and Three-point**.
 
 ### How to use it?
 
-1. **Choose a lighting pattern** from the left column (Rembrandt, Butterfly, Loop, Split…).
-2. **Step 1 — Framing**: adjust the position of Venus (forward/back, orientation) and your camera body (distance, height, focal length).
-3. **Step 2 — Light sources**: open the key and fill lights, and tweak angle, distance, height, power, modifier and even color.
-4. **Preview**: watch the result live in the preview and click **"Take a photo"** to download the render (1920 × 1280).
-5. **Questions**: every 3 minutes, a question tied to the current pattern (yes/no, single or multiple choice). A correct answer lights up a **star** — 3 stars per pattern. Questions stop after 3 correct answers.
-6. **Did you know?**: small educational tips appear at the top-left of the 3D scene throughout the course.
+1. **Pick a pattern** from the list: the lamps move into place as in a real studio.
+2. **Subject tab**: set the camera (distance, height, focal length), Venus's position and the background (colour, background light).
+3. **Key and Fill tabs**: modifier, angle, distance, height, power, colour. The rim light lives in the Fill tab. You can also **drag the lamps on the floor plan** at the bottom left of the scene.
+4. **Take the challenge**: the lamps are moved and you rebuild the pattern. The live **diagnosis** checks the key's angle and height, the amount of fill (and the rim light when needed), with concrete tips (“raise the key by about 30 cm”). Success = **1 star**, and the shot goes to your contact sheet.
+5. **Questions**: every 3 minutes, or right away with “Question now”. Two correct answers = **2 stars**.
+6. **Preview**: compare your shot with the target look using the “Compare” slider, and take photos (1920 × 1280) that land on the **contact sheet**, where you can download them.
 
-**Results**: the "Results" block in the left column appears after your first answer. The **end-of-course** window opens automatically once all 7 patterns have their 3 stars (21/21).
+Good to know:
+- Each beam automatically fits around the bust. The **modifier sets the softness**: snoot and reflector give crisp shadows, softbox and umbrella soft ones.
+- The **lighting ratio** (Fill tab) shows the contrast between the lit side and the shadow side.
+- Progress (stars) and language are **saved** in the browser. Photos are kept for the session.
+- The interface is available in **French and English** and adapts to tablets and phones.
+
+The **summary** window opens automatically once all 8 patterns have 3 stars (24/24), and is always available from “See my results”.
 
 ### Running the project
 
-**Option A — Prebuilt demo (no install)**
-Open `index.html` from the `dist/` folder behind a small static server, or host the `dist/` folder on any static host (Netlify, Vercel, GitHub Pages, nginx…). For GitHub Pages, a `.github/workflows/deploy.yml` workflow is included: push to `main` and enable Pages (Source: GitHub Actions).
+**Option A — Online or static**
+The `.github/workflows/deploy.yml` workflow tests, builds and publishes the site to GitHub Pages on every push to `main` (Source: GitHub Actions). You can also run `npm run build` and host the `dist/` folder on any static host.
 
 **Option B — Development with Docker**
 ```bash
 docker compose up --build
 ```
-Then open http://localhost:5173.
+Then open http://localhost:5174.
 
 **Option C — Development without Docker**
 ```bash
 npm install
-npm run dev
+npm run dev     # http://localhost:5173
+npm test        # tests (patterns, challenge, translations, content)
 ```
 
 ---
 
 ## Tech / Technique (résumé)
 
-- **React + TypeScript + Vite** pour l'interface.
-- **Three.js** (via React Three Fiber) pour la vue 3D du studio.
-- Assets 3D : caméra Canon EOS 60D + modèle Vénus (GLB).
+- **React + TypeScript + Vite** pour l'interface, **Vitest** pour les tests.
+- **Three.js** (via React Three Fiber) pour la vue 3D du studio, rendue à la demande pour ménager le processeur graphique.
+- Code organisé par rôle : `src/studio/model.ts` (géométrie et lumière), `content/` (schémas, questions, astuces bilingues), `challenge.ts` (diagnostic), `scene/` (3D), `ui/` (panneaux).
+- Assets 3D : Vénus de Milo (CC0) et Canon EOS 60D (CC BY 4.0). Détails et crédits : `ASSETS.md`.
 - Licence : voir `LICENSE`.
 
 © 2026 Studio Light Lab · CC BY-NC-SA 4.0
