@@ -37,7 +37,7 @@ export function Intro({ resume, onStart }: { resume: boolean; onStart: () => voi
   </Modal>
 }
 
-export function EndModal({ setups, starsOf, totalStars, challenges, answered, onClose, onRestart }: { setups: Setup[]; starsOf: (id: string) => number; totalStars: number; challenges: number; answered: number; onClose: () => void; onRestart: () => void }) {
+export function EndModal({ setups, starsOf, solutionShown, totalStars, challenges, answered, onClose, onRestart }: { setups: Setup[]; starsOf: (id: string) => number; solutionShown: Record<string, boolean>; totalStars: number; challenges: number; answered: number; onClose: () => void; onRestart: () => void }) {
   const { t, l } = useI18n()
   const max = setups.length * 3
   const pct = totalStars / max
@@ -46,8 +46,8 @@ export function EndModal({ setups, starsOf, totalStars, challenges, answered, on
     <div className="end-card">
       <span className="eyebrow">{t('end.eyebrow')}</span>
       <h1 id="end-title" className="modal-title">{t('end.title')}<span className="title-dot">.</span> {t('end.level')} <span className="end-level">{t(level)}</span></h1>
-      <p className="end-summary">{t('end.summary', { stars: totalStars, max, challenges, answered })}</p>
-      <div className="end-grid">{setups.map(s => <div key={s.id} className="end-row"><strong>{l(s.label)}</strong><StarBadge filled={starsOf(s.id)} /></div>)}</div>
+      <p className="end-summary">{t('end.summary', { stars: totalStars, max, challenges, answered })}{Object.values(solutionShown).some(Boolean) && ` · ${t('end.solutions', { count: Object.values(solutionShown).filter(Boolean).length })}`}</p>
+      <div className="end-grid">{setups.map(s => <div key={s.id} className="end-row"><strong>{l(s.label)}</strong>{solutionShown[s.id] ? <span className="end-solution">{t('end.solution')}</span> : <StarBadge filled={starsOf(s.id)} />}</div>)}</div>
       <p className="field-hint end-legend">{t('end.legend')}</p>
       <div className="end-actions">
         <button type="button" className="cta" onClick={onClose}>{t('end.continue')}</button>

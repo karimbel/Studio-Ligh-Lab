@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 import { useI18n, type TKey } from '../i18n'
 import { groupOrder, type Check, type CheckGroup } from '../challenge'
-import { IconCamera, IconCheck, IconCross, IconFill, IconKey, IconRim, IconTarget } from './icons'
+import { IconCamera, IconCheck, IconCross, IconEye, IconFill, IconKey, IconRestart, IconRim, IconTarget } from './icons'
 
 type Props = {
   checks: Check[]
-  active: boolean
-  done: boolean
+  active: boolean // exercice en cours
+  done: boolean // étoile du défi déjà gagnée
   justSolved: boolean
-  onStart: () => void
-  onAbandon: () => void
+  solutionShown: boolean
+  onRestart: () => void
+  onShowSolution: () => void
 }
 
 const groupIcon: Record<CheckGroup, JSX.Element> = {
@@ -20,10 +21,12 @@ const groupIcon: Record<CheckGroup, JSX.Element> = {
 }
 
 /** Compare la scène au rendu recherché, groupe par groupe : seuls les points à corriger restent dépliés. */
-export function Diagnostic({ checks, active, done, justSolved, onStart, onAbandon }: Props) {
+export function Diagnostic({ checks, active, done, justSolved, solutionShown, onRestart, onShowSolution }: Props) {
   const { t } = useI18n()
   const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 720px)').matches)
-  useEffect(() => { if (active || justSolved) setCollapsed(false) }, [active, justSolved])
+  const [confirming, setConfirming] = useState(false)
+  useEffect(() => { if (justSolved) setCollapsed(false) }, [justSolved])
+  useEffect(() => { if (!active) setConfirming(false) }, [active])
   const solved = checks.every(check => check.ok)
   const groups = groupOrder.map(group => ({ group, items: checks.filter(check => check.group === group) })).filter(g => g.items.length > 0)
 
@@ -33,8 +36,9 @@ export function Diagnostic({ checks, active, done, justSolved, onStart, onAbando
       <span className="diagnostic-score">{checks.filter(c => c.ok).length}/{checks.length}</span>
     </button>
     {!collapsed && <>
-      {justSolved && <div className="diagnostic-win"><strong>{t('diag.solved')}</strong><p>{t('diag.solvedText')}</p></div>}
+      {justSolved && <div className="diagnostic-win"><strong>{t('diag.solved')}</strong><p>{t(solutionShown ? 'diag.solvedNoStar' : 'diag.solvedText')}</p></div>}
       {active && !justSolved && <p className="field-hint">{t('diag.startHint')}</p>}
+      {!active && !justSolved && solutionShown && <p className="field-hint diag-solution-note">{t('diag.solutionShown')}</p>}
       <div className="diag-groups">
         {groups.map(({ group, items }) => {
           const failing = items.filter(item => !item.ok)
@@ -58,9 +62,18 @@ export function Diagnostic({ checks, active, done, justSolved, onStart, onAbando
       </div>
       {!active && solved && !justSolved && <p className="field-hint diag-all-good">{t('diag.allGood')}</p>}
       <div className="diagnostic-actions">
-        {active
-          ? <button type="button" className="ghost-btn" onClick={onAbandon}>{t('diag.abandon')}</button>
-          : <button type="button" className="cta cta-small" onClick={onStart}><IconTarget size={15} />{done ? t('diag.again') : t('diag.start')}{done && <span className="done-star">★</span>}</button>}
+        {active && !confirming && <div className="diag-buttons">
+          <button type="button" className="ghost-btn" onClick={onRestart}><IconRestart size={14} />{t('diag.restart')}</button>
+          <button type="button" className="ghost-btn solution-btn" onClick={() => solutionShown ? onShowSolution() : setConfirming(true)}><IconEye size={14} />{t('diag.solution')}</button>
+        </div>}
+        {active && confirming && <div className="diag-confirm" role="alertdialog" aria-label={t('diag.solution')}>
+          <p>{t('diag.solutionWarn')}</p>
+          <div className="diag-buttons">
+            <button type="button" className="ghost-btn" onClick={() => setConfirming(false)}>{t('diag.cancel')}</button>
+            <button type="button" className="ghost-btn solution-btn" onClick={() => { setConfirming(false); onShowSolution() }}>{t('diag.solutionConfirm')}</button>
+          </div>
+        </div>}
+        {!active && <button type="button" className="cta cta-small" onClick={onRestart}><IconTarget size={15} />{solutionShown ? t('diag.practice') : t('diag.again')}{done && !solutionShown && <span className="done-star">★</span>}</button>}
       </div>
     </>}
   </div>

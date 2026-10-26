@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Studio, type Backdrop, type BackgroundLight, type CaptureFn } from './scene/Studio'
-import { challengeStart, setups } from './content/setups'
+import { exerciseStarts, setups } from './content/setups'
 import { knowledgeBySetup, questionsBySetup, type Question } from './content/questions'
 import { evaluate, isSolved, referenceView } from './challenge'
 import { DEFAULT_COLOR, clampDistance, placeLights, polarToXZ, wrapDeg, type Light, type LightId, type View } from './model'
@@ -13,7 +13,7 @@ import { Diagnostic } from './ui/Diagnostic'
 import { Preview } from './ui/Preview'
 import { QuizModal, QuizTimer, StarBadge } from './ui/Quiz'
 import { ContactSheet, Credits, EndModal, Intro, Toast, type Shot } from './ui/Overlays'
-import { IconFill, IconHelp, IconInfo, IconKey, IconRim, IconSheet, IconSubject } from './ui/icons'
+import { IconEye, IconFill, IconHelp, IconInfo, IconKey, IconRim, IconSheet, IconSubject } from './ui/icons'
 
 type Tab = 'subject' | 'key' | 'fill'
 const QUIZ_STARS = 2
@@ -29,9 +29,9 @@ export function App() {
 
   // Plateau
   const [activeSetup, setActiveSetup] = useState(setups[0].id)
-  // au départ, le boîtier est placé comme sur la référence du premier schéma
-  const initialView = useMemo(() => referenceView(setups[0].challenge, 0), [])
-  const [lights, setLights] = useState<Light[]>(() => placeLights(setups[0].lights, 0, initialView.cameraAngle))
+  // au départ, le premier schéma est à reconstruire : boîtier et lampes déréglés
+  const initialView = exerciseStarts[0].camera
+  const [lights, setLights] = useState<Light[]>(() => placeLights(exerciseStarts[0].lights, 0, initialView.cameraAngle))
   const [subjectZ, setSubjectZ] = useState(0)
   const [subjectRotY, setSubjectRotY] = useState(0)
   const [cameraAngle, setCameraAngleRaw] = useState(initialView.cameraAngle)
@@ -55,7 +55,9 @@ export function App() {
   const [quizOpen, setQuizOpen] = useState(false)
   const [question, setQuestion] = useState<Question | null>(null)
   const [questionIndex, setQuestionIndex] = useState(0)
-  const [challengeActive, setChallengeActive] = useState(false)
+  const [challengeActive, setChallengeActive] = useState(true)
+  const [solutionShown, setSolutionShown] = useState<Record<string, boolean>>({})
+  const lastStart = useRef(0)
   const [justSolved, setJustSolved] = useState(false)
   const [tip, setTip] = useState<string | null>(null)
   const [tipIndex, setTipIndex] = useState(0)
@@ -72,7 +74,8 @@ export function App() {
 
   const setup = setups.find(s => s.id === activeSetup)!
   const modalOpen = introOpen || quizOpen || endOpen || sheetOpen || creditsOpen
-  const starsOf = (id: string) => (challengeDone[id] ? 1 : 0) + Math.min(QUIZ_STARS, quizStars[id] ?? 0)
+  // voir la solution annule les étoiles du schéma (défi et questions)
+  const starsOf = (id: string) => solutionShown[id] ? 0 : (challengeDone[id] ? 1 : 0) + Math.min(QUIZ_STARS, quizStars[id] ?? 0)
   const totalStars = setups.reduce((sum, s) => sum + starsOf(s.id), 0)
   const maxStars = setups.length * 3
   const challengesPassed = setups.filter(s => challengeDone[s.id]).length
@@ -115,32 +118,40 @@ export function App() {
     return () => window.clearTimeout(id)
   }, [tip, modalOpen, activeSetup, tipIndex, lang])
 
+  /** Démarre l'exercice : boîtier et lampes déréglés, à partir d'un point de départ différent du précédent. */
+  const startExercise = () => {
+    const index = (lastStart.current + 1 + Math.floor(Math.random() * (exerciseStarts.length - 1))) % exerciseStarts.length
+    lastStart.current = index
+    const start = exerciseStarts[index]
+    setCameraView({ ...start.camera, subjectRotY })
+    setLights(placeLights(start.lights, subjectZ, start.camera.cameraAngle))
+    setChallengeActive(true)
+    setJustSolved(false)
+  }
+
   const apply = (id: string) => {
-    const preset = setups.find(s => s.id === id)!
-    // le boîtier et les lampes se placent comme sur le rendu recherché
-    const view = referenceView(preset.challenge, subjectRotY)
-    setCameraView(view)
-    setLights(placeLights(preset.lights, subjectZ, view.cameraAngle))
     setActiveSetup(id)
+    setQuestionIndex(0)
+    startExercise()
+    showTip(id, 0)
+  }
+
+  /** La solution : boîtier et lampes placés exactement comme le rendu recherché. Annule les étoiles du schéma. */
+  const showSolution = () => {
+    const view = referenceView(setup.challenge, subjectRotY)
+    setCameraView(view)
+    setLights(placeLights(setup.lights, subjectZ, view.cameraAngle))
+    setSolutionShown(current => ({ ...current, [activeSetup]: true }))
+    setChallengeDone(current => ({ ...current, [activeSetup]: false }))
+    setQuizStars(current => ({ ...current, [activeSetup]: 0 }))
     setChallengeActive(false)
     setJustSolved(false)
-    setQuestionIndex(0)
-    showTip(id, 0)
   }
 
   // Défi
   const view: View = { cameraAngle, cameraDistance, cameraHeight, focal: focalLength, subjectRotY }
   const checks = useMemo(() => evaluate(setup.challenge, lights, subjectZ, view), [setup, lights, subjectZ, cameraAngle, cameraDistance, cameraHeight, focalLength, subjectRotY])
   const solved = isSolved(checks)
-  const startChallenge = () => {
-    // tout est déréglé : boîtier dans l'axe et trop bas, lampes déplacées
-    setCameraView({ ...view, cameraAngle: 0, cameraDistance: 2, cameraHeight: 1.45, focal: 85 })
-    setLights(placeLights(challengeStart(), subjectZ, 0))
-    setChallengeActive(true)
-    setJustSolved(false)
-    setTip(null)
-    openTab('key')
-  }
 
   const takeShot = (challenge: boolean) => {
     const src = captureRef.current?.()
@@ -157,17 +168,17 @@ export function App() {
     const id = window.setTimeout(() => {
       setChallengeActive(false)
       setJustSolved(true)
-      setChallengeDone(current => ({ ...current, [activeSetup]: true }))
-      takeShot(true)
+      if (!solutionShown[activeSetup]) setChallengeDone(current => ({ ...current, [activeSetup]: true }))
+      takeShot(!solutionShown[activeSetup])
       window.setTimeout(() => setJustSolved(false), 6000)
     }, 900)
     return () => window.clearTimeout(id)
-  }, [challengeActive, solved, activeSetup])
+  }, [challengeActive, solved, activeSetup, solutionShown])
 
   // Questions
   const fireQuestion = () => {
     const list = questionsBySetup[activeSetup]
-    if (!list?.length || (quizStars[activeSetup] ?? 0) >= QUIZ_STARS || modalOpen) return
+    if (!list?.length || solutionShown[activeSetup] || (quizStars[activeSetup] ?? 0) >= QUIZ_STARS || modalOpen) return
     setQuestion(list[questionIndex % list.length])
     setQuestionIndex(i => i + 1)
     setQuizOpen(true)
@@ -178,7 +189,8 @@ export function App() {
   }
 
   // Fin de parcours : une seule ouverture automatique, au moment où tout est complet
-  const complete = totalStars === maxStars
+  // complet : chaque schéma a ses 3 étoiles, ou sa solution a été consultée
+  const complete = setups.every(s => starsOf(s.id) === 3 || solutionShown[s.id])
   const wasComplete = useRef(complete)
   useEffect(() => {
     if (complete && !wasComplete.current) setEndOpen(true)
@@ -188,6 +200,7 @@ export function App() {
   const resetAll = () => {
     setQuizStars(emptyCounts())
     setChallengeDone({})
+    setSolutionShown({})
     setAnswered(0)
     setEndOpen(false)
     apply(setups[0].id)
@@ -220,7 +233,7 @@ export function App() {
           {setups.map(s => <button type="button" className={s.id === activeSetup ? 'preset-active' : ''} key={s.id} onClick={() => apply(s.id)} aria-pressed={s.id === activeSetup}>
             <strong>{l(s.label)}</strong>
             <span>{l(s.description)}</span>
-            <span className="preset-badge"><StarBadge filled={starsOf(s.id)} /></span>
+            <span className="preset-badge" title={solutionShown[s.id] ? t('lib.solutionBadge') : undefined}>{solutionShown[s.id] ? <span className="solution-badge"><IconEye size={13} /></span> : <StarBadge filled={starsOf(s.id)} />}</span>
           </button>)}
         </div>
         {(answered > 0 || challengesPassed > 0) && <div className="results-block">
@@ -252,9 +265,9 @@ export function App() {
             {setup.reference && <figure className="lighting-reference"><img src={setup.reference} alt={t('tip.alt', { label: l(setup.label) })} /><figcaption>{t('tip.reference')}</figcaption></figure>}
             <p>{tip}</p>
           </div>}
-          {!introOpen && <QuizTimer seconds={QUIZ_INTERVAL} paused={modalOpen} stars={starsOf(activeSetup)} finished={(quizStars[activeSetup] ?? 0) >= QUIZ_STARS} onFire={fireQuestion} />}
+          {!introOpen && <QuizTimer seconds={QUIZ_INTERVAL} paused={modalOpen} stars={starsOf(activeSetup)} finished={(quizStars[activeSetup] ?? 0) >= QUIZ_STARS} locked={!!solutionShown[activeSetup]} onFire={fireQuestion} />}
           <TopView lights={lights} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraAngle={cameraAngle} onCameraMove={setCameraAngle} cameraDistance={cameraDistance} focalLength={focalLength} backdropVisible={backdrop.visible} selected={selected} onSelect={select} onMove={editPolar} />
-          <Diagnostic checks={checks} active={challengeActive} done={!!challengeDone[activeSetup]} justSolved={justSolved} onStart={startChallenge} onAbandon={() => apply(activeSetup)} />
+          <Diagnostic checks={checks} active={challengeActive} done={!!challengeDone[activeSetup]} justSolved={justSolved} solutionShown={!!solutionShown[activeSetup]} onRestart={startExercise} onShowSolution={showSolution} />
         </div>
       </section>
 
@@ -286,7 +299,7 @@ export function App() {
 
       {introOpen && <Intro resume={introSeen} onStart={() => { setIntroOpen(false); if (!introSeen) { setIntroSeen(true); showTip(activeSetup, 0) } }} />}
       {quizOpen && question && <QuizModal key={question.id} question={question} schemeLabel={l(setup.label)} stars={starsOf(activeSetup)} onResult={handleQuizResult} onClose={() => setQuizOpen(false)} />}
-      {endOpen && <EndModal setups={setups} starsOf={starsOf} totalStars={totalStars} challenges={challengesPassed} answered={answered} onClose={() => setEndOpen(false)} onRestart={resetAll} />}
+      {endOpen && <EndModal setups={setups} starsOf={starsOf} solutionShown={solutionShown} totalStars={totalStars} challenges={challengesPassed} answered={answered} onClose={() => setEndOpen(false)} onRestart={resetAll} />}
       {sheetOpen && <ContactSheet shots={shots} onRemove={id => setShots(current => current.filter(shot => shot.id !== id))} onClose={() => setSheetOpen(false)} />}
       {creditsOpen && <Credits onClose={() => setCreditsOpen(false)} />}
       <Toast message={toast} />

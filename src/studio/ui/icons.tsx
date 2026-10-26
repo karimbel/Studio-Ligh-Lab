@@ -22,6 +22,8 @@ export const IconHelp = (p: { size?: number }) => <Icon {...p}><circle cx="12" c
 export const IconInfo = (p: { size?: number }) => <Icon {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 11v5" /><path d="M12 7.8h.01" /></Icon>
 export const IconTarget = (p: { size?: number }) => <Icon {...p}><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r=".8" fill="currentColor" /></Icon>
 export const IconDownload = (p: { size?: number }) => <Icon {...p}><path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19.5h14" /></Icon>
+export const IconEye = (p: { size?: number }) => <Icon {...p}><path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.8" /></Icon>
+export const IconRestart = (p: { size?: number }) => <Icon {...p}><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3" /><path d="M4.5 4.5v4h4" /></Icon>
 export const IconCheck = (p: { size?: number }) => <Icon {...p}><path d="M5 12.5l4.2 4.2L19 7" /></Icon>
 export const IconCross = (p: { size?: number }) => <Icon {...p}><path d="M7 7l10 10M17 7 7 17" /></Icon>
 export const IconQuestion = (p: { size?: number }) => <Icon {...p}><path d="M4.5 6.5h15v9h-8l-4.5 3.5v-3.5H4.5Z" /><path d="M10.4 9.4a1.7 1.7 0 1 1 2.3 1.6c-.5.2-.7.5-.7 1" /><path d="M12 13.6h.01" /></Icon>

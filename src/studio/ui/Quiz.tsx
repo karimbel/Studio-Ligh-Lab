@@ -10,7 +10,8 @@ export function StarBadge({ filled, total = 3 }: { filled: number; total?: numbe
 }
 
 /** Minuteur avant la prochaine question, avec possibilité de répondre tout de suite. */
-export function QuizTimer({ seconds = 180, paused, stars, finished, onFire }: { seconds?: number; paused: boolean; stars: number; finished: boolean; onFire: () => void }) {
+export function QuizTimer({ seconds = 180, paused, stars, finished: done, locked, onFire }: { seconds?: number; paused: boolean; stars: number; finished: boolean; locked?: boolean; onFire: () => void }) {
+  const finished = done || !!locked
   const { t } = useI18n()
   const [left, setLeft] = useState(seconds)
   const fireRef = useRef(onFire)
@@ -35,13 +36,13 @@ export function QuizTimer({ seconds = 180, paused, stars, finished, onFire }: { 
   const circ = 2 * Math.PI * radius
   const progress = finished ? 1 : 1 - left / seconds
 
-  return <div className={`quiz-timer ${announce ? 'quiz-announce' : ''} ${finished ? 'quiz-finished' : ''}`}>
+  return <div className={`quiz-timer ${announce ? 'quiz-announce' : ''} ${finished ? 'quiz-finished' : ''} ${locked ? 'quiz-locked' : ''}`}>
     <svg width="76" height="76" viewBox="0 0 76 76" aria-hidden="true">
       <circle cx="38" cy="38" r={radius} fill="rgba(16,21,30,.85)" stroke="#26384a" strokeWidth="5" />
       <circle cx="38" cy="38" r={radius} fill="none" stroke="currentColor" strokeWidth="5" strokeLinecap="round" transform="rotate(-90 38 38)" strokeDasharray={circ} strokeDashoffset={circ * (1 - progress)} style={{ transition: 'stroke-dashoffset 1s linear' }} />
-      <text x="38" y="43" textAnchor="middle" fill="#dce6f3" style={{ font: '700 13px Manrope, system-ui, sans-serif' }}>{finished ? '✓' : `${mm}:${ss}`}</text>
+      <text x="38" y="43" textAnchor="middle" fill="#dce6f3" style={{ font: '700 13px Manrope, system-ui, sans-serif' }}>{locked ? '—' : finished ? '✓' : `${mm}:${ss}`}</text>
     </svg>
-    <span className="quiz-timer-label">{finished ? t('quiz.over') : announce ? t('quiz.soon') : <StarBadge filled={stars} />}</span>
+    <span className="quiz-timer-label">{locked ? t('quiz.locked') : finished ? t('quiz.over') : announce ? t('quiz.soon') : <StarBadge filled={stars} />}</span>
     {!finished && <button type="button" className="quiz-now" onClick={() => { setLeft(seconds); fireRef.current() }} disabled={paused}><IconQuestion size={14} /><span className="quiz-now-label">{t('quiz.now')}</span></button>}
   </div>
 }

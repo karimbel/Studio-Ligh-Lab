@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { challengeStart, setups } from './content/setups'
+import { exerciseStarts, setups } from './content/setups'
 import { knowledgeBySetup, questionsBySetup } from './content/questions'
 import { defaultView, evaluate, isSolved, referenceView } from './challenge'
 import { dictionaries } from './i18n'
@@ -19,9 +19,17 @@ describe('schémas et défi', () => {
     expect(checks.filter(c => !c.ok)).toEqual([])
   })
 
-  it.each(setups.map(s => [s.id, s] as const))('le point de départ du défi %s ne le réussit pas', (_, setup) => {
-    const view = { ...defaultView, cameraHeight: 1.45 }
-    expect(isSolved(evaluate(setup.challenge, placeLights(challengeStart(), 0, 0), 0, view))).toBe(false)
+  it.each(setups.map(s => [s.id, s] as const))('aucun point de départ ne réussit déjà le schéma %s', (_, setup) => {
+    for (const [index, start] of exerciseStarts.entries()) {
+      for (const subjectRotY of [0, 35, -60]) {
+        const view = { ...start.camera, subjectRotY }
+        const checks = evaluate(setup.challenge, placeLights(start.lights, 0, start.camera.cameraAngle), 0, view)
+        expect(isSolved(checks), `départ ${index} · Vénus ${subjectRotY}°`).toBe(false)
+        // chaque départ laisse du travail sur le cadrage et sur la lumière
+        expect(checks.some(c => c.group === 'framing' && !c.ok), `cadrage, départ ${index}`).toBe(true)
+        expect(checks.some(c => c.group !== 'framing' && !c.ok), `lumière, départ ${index}`).toBe(true)
+      }
+    }
   })
 
   it.each([-90, 0, 45, 120])('les presets restent valides quand la Vénus a pivoté de %s°', rot => {

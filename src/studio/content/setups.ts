@@ -113,9 +113,34 @@ export const setups: Setup[] = [
   },
 ]
 
-/** Point de départ du défi : principale collée à l'axe caméra, à hauteur d'yeux, remplissage trop fort, contre-jour éteint. */
-export const challengeStart = (): Light[] => [
-  { id: 'key', x: 0, z: DISTANCE, power: 72, modifier: 'Softbox', enabled: true, height: 1.7 },
-  { id: 'fill', ...around(1.7, 1), power: 55, modifier: 'Reflecteur', enabled: true, height: 1.7 },
-  rim(),
+/** Lampe placée par rapport au boîtier : azimut (°, négatif = gauche de l'image), à 2 m du sujet. */
+const at = (id: Light['id'], azimuth: number, extra: Partial<Light>): Light => {
+  const a = azimuth * Math.PI / 180
+  return { id, x: Math.sin(a) * DISTANCE, z: Math.cos(a) * DISTANCE, power: 60, modifier: 'Softbox', enabled: true, height: 1.7, ...extra }
+}
+
+/** Boîtier d'un point de départ : angle autour du sujet, distance, hauteur, focale. */
+export type StartCamera = { cameraAngle: number; cameraDistance: number; cameraHeight: number; focal: number }
+
+/**
+ * Points de départ de l'exercice : boîtier et lampes déréglés, différents à chaque essai.
+ * Les lampes sont données par rapport au boîtier ; aucun ne réussit un schéma (vérifié par les tests).
+ */
+export const exerciseStarts: { camera: StartCamera; lights: Light[] }[] = [
+  { // boîtier dans l'axe mais trop bas, principale collée à l'objectif, remplissage trop fort
+    camera: { cameraAngle: 0, cameraDistance: 2, cameraHeight: 1.45, focal: 85 },
+    lights: [at('key', 0, { power: 72 }), at('fill', 60, { power: 55, modifier: 'Reflecteur' }), rim()],
+  },
+  { // grand-angle de loin et trop haut, principale rasante à droite, remplissage du même côté que la caméra
+    camera: { cameraAngle: -25, cameraDistance: 3.2, cameraHeight: 1.95, focal: 50 },
+    lights: [at('key', 80, { height: 1.2, modifier: 'Parapluie' }), at('fill', -20, { power: 50, modifier: 'Reflecteur' }), rim()],
+  },
+  { // téléobjectif trop serré, principale derrière le sujet, remplissage bas et faible
+    camera: { cameraAngle: 0, cameraDistance: 1.6, cameraHeight: 1.7, focal: 135 },
+    lights: [at('key', 160, { height: 2.6, power: 72, modifier: 'Snoot' }), at('fill', 10, { power: 8, height: 1, modifier: 'Reflecteur' }), rim()],
+  },
+  { // boîtier tourné de profil, focale courte, principale presque à l'aplomb, remplissage éteint
+    camera: { cameraAngle: 70, cameraDistance: 2.4, cameraHeight: 1.25, focal: 35 },
+    lights: [at('key', -15, { height: 3.2, power: 72, modifier: 'Snoot' }), at('fill', 45, { power: 18, enabled: false, modifier: 'Reflecteur' }), { ...rim(true), power: 60 }],
+  },
 ]

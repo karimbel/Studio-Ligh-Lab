@@ -176,6 +176,16 @@ aside::-webkit-scrollbar-track { background: transparent }
 .diag-group.has-issues { border-color: #3a3426; background: rgba(255, 216, 168, .03) }
 .diag-group .checks { margin-top: 7px; gap: 6px }
 .diag-all-good { margin-top: 8px; color: #bfe9cf }
+.diag-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px }
+.diag-buttons .ghost-btn { padding: 8px 6px; font-size: 10.5px }
+.solution-btn { color: #ffd8a8; border-color: #6b5634 }
+.solution-btn:hover { background: #2a2216; border-color: #b08850 }
+.diag-confirm { padding: 10px; border: 1px solid #6b5634; border-radius: 9px; background: rgba(255, 216, 168, .06) }
+.diag-confirm p { margin-bottom: 9px; color: #ffe2bd; font-size: 11px; line-height: 1.5 }
+.diag-solution-note { margin-top: 8px; color: #ffd8a8 }
+.solution-badge { display: inline-grid; place-items: center; width: 22px; height: 18px; border-radius: 6px; background: #3a3020; color: #ffd8a8 }
+.quiz-locked { color: #b08850 }
+.end-solution { font-size: 11px; font-weight: 700; color: #ffd8a8 }
 .diagnostic-win { margin-top: 10px; padding: 10px; border-radius: 9px; background: rgba(62, 148, 92, .16); border: 1px solid rgba(104, 204, 143, .45) }
 .diagnostic-win strong { color: var(--ok); font-size: 13px }
 .diagnostic-win p { color: #bfe9cf; font-size: 11px; line-height: 1.5; margin-top: 3px }
