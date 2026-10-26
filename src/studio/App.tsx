@@ -204,9 +204,6 @@ export function App() {
       <aside className="library">
         <div className="brand-row">
           <div><span className="eyebrow">{t('intro.eyebrow')}</span><h1 className="brand">Studio Light Lab</h1></div>
-          <div className="lang-toggle" role="group" aria-label={t('lib.lang')}>
-            {(['fr', 'en'] as Lang[]).map(code => <button key={code} type="button" className={lang === code ? 'active' : ''} aria-pressed={lang === code} onClick={() => setLang(code)}>{code.toUpperCase()}</button>)}
-          </div>
         </div>
         <h2>{t('lib.patterns')}</h2>
         <p className="lib-hint">{t('lib.patternsHint')}</p>
@@ -232,7 +229,12 @@ export function App() {
       <section className="scene">
         <div className="scene-header">
           <div><span className="eyebrow">{t('scene.active')} • {l(setup.label).toUpperCase()}</span><h2>{t('scene.title')}</h2></div>
-          <span className="tip">{t('scene.grid')}</span>
+          <div className="scene-header-side">
+            <span className="tip">{t('scene.grid')}</span>
+            <div className="lang-toggle" role="group" aria-label={t('lib.lang')}>
+              {(['fr', 'en'] as Lang[]).map(code => <button key={code} type="button" className={lang === code ? 'active' : ''} aria-pressed={lang === code} onClick={() => setLang(code)}>{code.toUpperCase()}</button>)}
+            </div>
+          </div>
         </div>
         <div className="stage">
           <Studio lights={lights} labels={labels} formatDistance={value => i18n.num(value)} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraDistance={cameraDistance} cameraHeight={cameraHeight} focalLength={focalLength} selected={selected} onSelect={select} showSpotPoint={showSpotPoint} backdrop={backdrop} background={background} previewRef={previewRef} captureRef={captureRef} />

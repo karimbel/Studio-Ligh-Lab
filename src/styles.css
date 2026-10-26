@@ -38,12 +38,17 @@ a { color: var(--accent) }
 /* ---------- Mise en page ---------- */
 .app { display: grid; grid-template-columns: 276px minmax(420px, 1fr) 330px; grid-template-rows: minmax(0, 1fr); height: 100vh; height: 100dvh; overflow: hidden }
 @media (min-width: 721px) { html, body { overflow: hidden } }
-aside { background: var(--panel); padding: 24px; overflow: auto; min-height: 0 }
+aside { background: var(--panel); padding: 24px; overflow: auto; min-height: 0; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: #2d3a4a transparent }
+aside::-webkit-scrollbar { width: 8px }
+aside::-webkit-scrollbar-thumb { background: #2d3a4a; border-radius: 4px }
+aside::-webkit-scrollbar-thumb:hover { background: #3d5068 }
+aside::-webkit-scrollbar-track { background: transparent }
 .library { border-right: 1px solid var(--line); display: flex; flex-direction: column }
 .controls { border-left: 1px solid var(--line); padding: 20px; display: flex; flex-direction: column; gap: 14px }
 
 /* ---------- Colonne de gauche ---------- */
 .brand-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px }
+.brand-row .eyebrow { white-space: nowrap }
 .brand { margin: 0 0 4px; font-size: 20px; white-space: nowrap }
 .lang-toggle { display: inline-flex; padding: 3px; gap: 2px; background: #1a202b; border: 1px solid var(--line-2); border-radius: 8px; flex: none }
 .lang-toggle button { border: 0; background: transparent; color: var(--muted); font: 600 10px var(--mono); padding: 4px 7px; border-radius: 5px }
@@ -68,6 +73,7 @@ aside { background: var(--panel); padding: 24px; overflow: auto; min-height: 0 }
 /* ---------- Scène ---------- */
 .scene { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: radial-gradient(circle at 50% 0, #1b2635, #10141c 62%) }
 .scene-header { padding: 24px 28px 14px; display: flex; justify-content: space-between; align-items: end; gap: 12px }
+.scene-header-side { display: flex; align-items: center; gap: 14px; flex: none }
 .scene-header h2 { font-size: 18px }
 .tip { color: #8291a6; font-size: 10px; white-space: nowrap }
 .stage { position: relative; flex: 1; min-height: 0 }
@@ -361,6 +367,7 @@ input[type=color] { width: 100%; height: 26px; padding: 0; border: 1px solid var
   .topview-head span:last-child { display: none }
   .diagnostic { right: 10px; bottom: 10px; width: min(210px, calc(100% - 170px)); padding: 10px }
   .controls { border-left: 0; border-top: 1px solid var(--line); padding: 14px }
+  aside { scrollbar-gutter: auto }
   .tabs { top: 0 }
   .modal-card { padding: 24px 20px }
 }
