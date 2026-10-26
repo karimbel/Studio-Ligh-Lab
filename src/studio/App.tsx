@@ -5,7 +5,7 @@ import { knowledgeBySetup, questionsBySetup, type Question } from './content/que
 import { evaluate, isSolved } from './challenge'
 import { DEFAULT_CAMERA_DISTANCE, DEFAULT_CAMERA_HEIGHT, DEFAULT_COLOR, DEFAULT_FOCAL, HEAD_TURN, clampDistance, placeLights, polarToXZ, wrapDeg, type Light, type LightId } from './model'
 import { I18nProvider, detectLang, makeTranslator, type Lang } from './i18n'
-import { loadProgress, saveProgress } from './storage'
+import { loadLang, saveLang } from './storage'
 import { LightPanel, RatioMeter } from './ui/LightPanel'
 import { SubjectPanel, backdropColors } from './ui/SubjectPanel'
 import { TopView } from './ui/TopView'
@@ -23,8 +23,7 @@ const TIP_INTERVAL = 60_000
 const emptyCounts = () => Object.fromEntries(setups.map(setup => [setup.id, 0])) as Record<string, number>
 
 export function App() {
-  const saved = useMemo(loadProgress, [])
-  const [lang, setLang] = useState<Lang>(saved.lang ?? detectLang())
+  const [lang, setLang] = useState<Lang>(() => loadLang() ?? detectLang())
   const i18n = useMemo(() => makeTranslator(lang, setLang), [lang])
   const { t, l } = i18n
 
@@ -45,11 +44,11 @@ export function App() {
   const [selected, setSelected] = useState<LightId | null>(null)
 
   // Parcours
-  const [introOpen, setIntroOpen] = useState(!saved.introSeen)
-  const [introSeen, setIntroSeen] = useState(!!saved.introSeen)
-  const [quizStars, setQuizStars] = useState<Record<string, number>>({ ...emptyCounts(), ...saved.quiz })
-  const [challengeDone, setChallengeDone] = useState<Record<string, boolean>>({ ...saved.challenge })
-  const [answered, setAnswered] = useState(saved.answered ?? 0)
+  const [introOpen, setIntroOpen] = useState(true)
+  const [introSeen, setIntroSeen] = useState(false)
+  const [quizStars, setQuizStars] = useState<Record<string, number>>(emptyCounts)
+  const [challengeDone, setChallengeDone] = useState<Record<string, boolean>>({})
+  const [answered, setAnswered] = useState(0)
   const [quizOpen, setQuizOpen] = useState(false)
   const [question, setQuestion] = useState<Question | null>(null)
   const [questionIndex, setQuestionIndex] = useState(0)
@@ -77,7 +76,7 @@ export function App() {
   const labels = { key: t('name.key'), fill: t('name.fill'), rim: t('name.rim') }
 
   useEffect(() => { document.documentElement.lang = lang }, [lang])
-  useEffect(() => { saveProgress({ quiz: quizStars, challenge: challengeDone, answered, lang, introSeen }) }, [quizStars, challengeDone, answered, lang, introSeen])
+  useEffect(() => { saveLang(lang) }, [lang])
 
   const showToast = useCallback((message: string) => {
     setToast(message)

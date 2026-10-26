@@ -1,30 +1,24 @@
 import type { Lang } from './i18n'
 
-export type Progress = {
-  quiz: Record<string, number> // bonnes réponses par schéma (2 max comptent)
-  challenge: Record<string, boolean> // défi réussi par schéma
-  answered: number
-  lang?: Lang
-  introSeen?: boolean
-}
+// Seule la langue choisie est retenue d'une visite à l'autre : la progression
+// (étoiles, questions, défis) repart de zéro à chaque chargement de la page.
+const LANG_KEY = 'studio-light-lab:lang'
+const LEGACY_PROGRESS_KEY = 'studio-light-lab:v2'
 
-const KEY = 'studio-light-lab:v2'
-
-export function loadProgress(): Partial<Progress> {
+export function loadLang(): Lang | undefined {
   try {
-    const raw = window.localStorage.getItem(KEY)
-    if (!raw) return {}
-    const data = JSON.parse(raw)
-    return typeof data === 'object' && data ? data : {}
+    window.localStorage.removeItem(LEGACY_PROGRESS_KEY) // ancienne sauvegarde de progression
+    const value = window.localStorage.getItem(LANG_KEY)
+    return value === 'fr' || value === 'en' ? value : undefined
   } catch {
-    return {}
+    return undefined
   }
 }
 
-export function saveProgress(progress: Progress) {
+export function saveLang(lang: Lang) {
   try {
-    window.localStorage.setItem(KEY, JSON.stringify(progress))
+    window.localStorage.setItem(LANG_KEY, lang)
   } catch {
-    // navigation privée ou stockage bloqué : la progression reste en mémoire
+    // navigation privée ou stockage bloqué : la langue reste celle du navigateur
   }
 }

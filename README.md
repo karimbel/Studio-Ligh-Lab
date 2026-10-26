@@ -26,7 +26,7 @@ Studio Light Lab est une simulation e-learning. Vous explorez les schémas de lu
 À savoir :
 - Le faisceau de chaque lampe s'ajuste automatiquement pour envelopper le buste. Le **modeleur règle la douceur** : snoot et réflecteur donnent des ombres nettes, softbox et parapluie des ombres fondues.
 - Le **ratio d'éclairage** (onglet Remplissage) indique le contraste entre le côté éclairé et le côté à l'ombre.
-- La progression (étoiles) et la langue sont **sauvegardées** dans le navigateur. Les photos sont conservées le temps de la session.
+- Chaque visite repart de zéro : étoiles, questions et défis se réinitialisent quand on recharge ou quitte la page. Seule la langue choisie est retenue. Les photos sont conservées le temps de la session.
 - L'interface est disponible en **français et en anglais**, et s'adapte à la tablette et au mobile.
 
 La fenêtre de **bilan** s'ouvre automatiquement quand les 8 schémas ont leurs 3 étoiles (24/24), et reste accessible depuis « Voir mes résultats ».
@@ -69,7 +69,7 @@ Studio Light Lab is an e-learning simulation. You explore the classic portrait l
 Good to know:
 - Each beam automatically fits around the bust. The **modifier sets the softness**: snoot and reflector give crisp shadows, softbox and umbrella soft ones.
 - The **lighting ratio** (Fill tab) shows the contrast between the lit side and the shadow side.
-- Progress (stars) and language are **saved** in the browser. Photos are kept for the session.
+- Every visit starts fresh: stars, questions and challenges reset when the page is reloaded or left. Only the chosen language is remembered. Photos are kept for the session.
 - The interface is available in **French and English** and adapts to tablets and phones.
 
 The **summary** window opens automatically once all 8 patterns have 3 stars (24/24), and is always available from “See my results”.
