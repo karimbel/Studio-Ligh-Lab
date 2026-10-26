@@ -88,7 +88,9 @@ aside::-webkit-scrollbar-track { background: transparent }
 .light-tag.tag-selected.tag-rim { border-color: var(--rim); color: #f2e6ff }
 
 /* Astuce */
-.info-pop { position: absolute; top: 14px; left: 16px; z-index: 30; max-width: 300px; padding: 14px 16px; background: rgba(16, 21, 30, .94); border: 1px solid #e3b341; border-left: 3px solid #e3b341; border-radius: 12px; box-shadow: 0 14px 34px #000a; animation: rise .35s ease-out }
+.stage-left { position: absolute; top: 14px; left: 16px; bottom: 14px; z-index: 30; width: 300px; display: flex; flex-direction: column; gap: 12px; pointer-events: none }
+.stage-left > * { pointer-events: auto; flex: none }
+.info-pop { position: relative; padding: 14px 16px; background: rgba(16, 21, 30, .94); border: 1px solid #e3b341; border-left: 3px solid #e3b341; border-radius: 12px; box-shadow: 0 14px 34px #000a; animation: rise .35s ease-out }
 .info-pop p { color: #c4d2e2; font-size: 12px; line-height: 1.6; margin-top: 8px }
 .info-pop-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px }
 .info-close { background: transparent; border: 0; color: #7f92aa; font-size: 18px; line-height: 1 }
@@ -111,7 +113,7 @@ aside::-webkit-scrollbar-track { background: transparent }
 @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 200, 138, .45) } 50% { box-shadow: 0 0 0 10px rgba(255, 200, 138, 0) } }
 
 /* Plan vu de dessus */
-.topview { position: absolute; left: 14px; bottom: 14px; z-index: 25; width: 210px; padding: 10px; background: rgba(13, 18, 26, .82); border: 1px solid #2b3a4b; border-radius: 14px; backdrop-filter: blur(6px); user-select: none }
+.topview { position: absolute; right: 14px; bottom: 14px; z-index: 25; width: 210px; padding: 10px; background: rgba(13, 18, 26, .82); border: 1px solid #2b3a4b; border-radius: 14px; backdrop-filter: blur(6px); user-select: none }
 .topview-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px }
 .topview-head span:last-child { color: var(--faint); font-size: 9px }
 .topview svg { display: block; width: 100%; height: auto; touch-action: none; overflow: visible }
@@ -142,7 +144,7 @@ aside::-webkit-scrollbar-track { background: transparent }
 .tv-light.is-off .tv-handle { stroke-dasharray: .05 .04 }
 
 /* Diagnostic / défi */
-.diagnostic { position: absolute; right: 14px; bottom: 14px; z-index: 25; width: 260px; padding: 12px 14px; background: rgba(13, 18, 26, .86); border: 1px solid #2b3a4b; border-radius: 14px; backdrop-filter: blur(6px); transition: border-color .3s, box-shadow .3s }
+.diagnostic { position: relative; width: 100%; padding: 12px 14px; background: rgba(13, 18, 26, .86); border: 1px solid #2b3a4b; border-radius: 14px; backdrop-filter: blur(6px); transition: border-color .3s, box-shadow .3s }
 .diagnostic.is-active { border-color: var(--key); box-shadow: 0 0 0 1px rgba(255, 212, 122, .2), 0 12px 30px #0008 }
 .diagnostic.is-solved { border-color: var(--ok); box-shadow: 0 0 0 4px rgba(127, 220, 164, .15), 0 12px 30px #0008; animation: win .8s ease-out }
 .diagnostic-head { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0; border: 0; background: none; text-align: left }
@@ -160,7 +162,8 @@ aside::-webkit-scrollbar-track { background: transparent }
 .checks .ko .check-icon { background: rgba(255, 154, 162, .13); color: var(--ko) }
 .checks .ok strong { color: #cfeedd }
 .diagnostic-actions { margin-top: 12px }
-.diagnostic:not(.is-collapsed) { max-height: calc(100% - 28px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #2d3a4a transparent }
+.stage-left > .diagnostic { flex: 0 1 auto; min-height: 0 }
+.diagnostic:not(.is-collapsed) { overflow-y: auto; scrollbar-width: thin; scrollbar-color: #2d3a4a transparent }
 .diag-groups { display: grid; gap: 6px; margin-top: 10px }
 .diag-group { padding: 7px 9px; border: 1px solid #233040; border-radius: 9px; background: rgba(255, 255, 255, .02) }
 .diag-group header { display: flex; align-items: center; gap: 7px; font-size: 11px }
@@ -380,8 +383,7 @@ input[type=color] { width: 100%; height: 26px; padding: 0; border: 1px solid var
   .preset-list button { flex: 0 0 190px; scroll-snap-align: start }
   .scene-header { padding: 14px 18px 10px }
   .topview { width: 170px }
-  .diagnostic { width: 232px }
-  .info-pop { max-width: 260px }
+  .stage-left { width: 260px }
 }
 
 /* Mobile : tout s'empile, la page défile */
@@ -395,16 +397,18 @@ input[type=color] { width: 100%; height: 26px; padding: 0; border: 1px solid var
   .scene-header { padding: 12px 14px 8px }
   .scene-header h2 { font-size: 15px }
   .tip { display: none }
-  .info-pop { left: 10px; right: 96px; top: 10px; max-width: none; padding: 11px 12px }
+  .stage-left { left: 10px; top: 10px; bottom: 10px; width: auto; right: 96px }
+  .info-pop { padding: 11px 12px }
   .info-pop .lighting-reference { display: none }
   .quiz-timer { top: 10px; right: 10px; padding: 6px }
   .quiz-timer > svg { width: 52px; height: 52px }
   .quiz-now { padding: 5px }
   .quiz-now-label { display: none }
   .quiz-timer-label { display: none }
-  .topview { left: 10px; bottom: 10px; width: 140px; padding: 7px }
+  .topview { right: 10px; bottom: 10px; width: 120px; padding: 7px }
   .topview-head span:last-child { display: none }
-  .diagnostic { right: 10px; bottom: 10px; width: min(210px, calc(100% - 170px)); padding: 10px }
+  .diagnostic { padding: 10px }
+  .stage-left > .diagnostic { margin-top: auto; width: calc(100% - 50px) }
   .controls { border-left: 0; border-top: 1px solid var(--line); padding: 14px; overflow: visible }
   .controls > .preview-block, .controls > .tabs { margin-right: 0 }
   .tab-panel { overflow: visible; padding: 0 }
