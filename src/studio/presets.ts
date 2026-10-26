@@ -8,7 +8,7 @@ const positionFromSubject = (x: number, z: number) => {
   const angle = Math.atan2(x, z)
   return { x: Math.sin(angle) * defaultDistanceFromSubject, z: Math.cos(angle) * defaultDistanceFromSubject }
 }
-const key = (x: number, z: number, modifier: Modifier = 'Snoot'): Light => ({ id: 'key', name: 'Principale', ...positionFromSubject(x, z), power: 72, modifier, enabled: true, targetY: 1.5 })
+const key = (x: number, z: number, modifier: Modifier = 'Snoot'): Light => ({ id: 'key', name: 'Principale', ...positionFromSubject(x, z), power: 72, modifier, enabled: true })
 const fill = (x: number, z: number, power = 18, modifier: Modifier = 'Reflecteur', height = 1.7, targetY?: number): Light => ({ id: 'fill', name: 'Remplissage', ...positionFromSubject(x, z), power, modifier, enabled: true, height, targetY })
 
 export const setups: Setup[] = [

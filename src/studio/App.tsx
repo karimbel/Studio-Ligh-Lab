@@ -15,13 +15,21 @@ import shortReference from '../assets/lighting-references/short.png'
 import clamshellReference from '../assets/lighting-references/clamshell.png'
 
 const modifiers: Modifier[] = ['Softbox', 'Parapluie', 'Stripbox', 'Reflecteur', 'Snoot']
-const modifierBeamAngle = (modifier: Modifier) => modifier === 'Stripbox' ? Math.PI / 6 : modifier === 'Parapluie' ? Math.PI / 2.5 : modifier === 'Reflecteur' ? Math.PI / 3.2 : modifier === 'Snoot' ? Math.PI / 12 : Math.PI / 3.5
 const subjectHeight = 1.9
 const venusNativeHeight = 2.120558
-const subjectLightHeight = 1.15
+const subjectLightHeight = 1.62 // centre du buste (visage + épaules)
 const sourceHeight = 2.7
 const defaultLightHeight = sourceHeight - 0.3
 const lightTargetHeight = (light: Light) => light.targetY ?? subjectLightHeight
+// Le faisceau est calé pour envelopper le buste et le visage, quelle que soit la distance de la lampe.
+const bustRadius = .35
+const emitterOffset = 1.2
+const emitterDistance = (light: Light, subjectZ: number) => Math.hypot(Math.hypot(light.x, light.z - subjectZ) - emitterOffset, (light.height ?? defaultLightHeight) - lightTargetHeight(light))
+const fittedBeamAngle = (light: Light, subjectZ: number) => Math.min(70 * Math.PI / 180, Math.max(5 * Math.PI / 180, Math.atan(bustRadius / Math.max(emitterDistance(light, subjectZ), .05))))
+const beamAngleOf = (light: Light, subjectZ: number) => light.angle ?? fittedBeamAngle(light, subjectZ)
+// Le modeleur règle la netteté du bord du faisceau : petit et dur (snoot) → bord net, grand et diffus (parapluie) → bord fondu.
+const modifierPenumbra = (modifier: Modifier) => modifier === 'Snoot' ? .1 : modifier === 'Reflecteur' ? .25 : modifier === 'Stripbox' ? .4 : modifier === 'Softbox' ? .5 : .6
+const penumbraOf = (light: Light) => light.penumbra ?? modifierPenumbra(light.modifier)
 const referenceDistance = 2
 const defaultCameraDistance = 2
 const cameraShift = -0.1
@@ -220,12 +228,12 @@ function StudioLight({ light, subjectZ, isSelected, onSelect, showSpotPoint }: {
   const illumination = subjectIllumination(light, subjectZ)
   const lightColor = light.color ?? '#e7f4ff'
   const beamColor = isSelected ? '#ffd47a' : lightColor
-  const beamAngle = light.angle ?? modifierBeamAngle(light.modifier)
+  const beamAngle = beamAngleOf(light, subjectZ)
   const lightRef = useRef<SpotLight>(null!)
   const targetRef = useRef<Object3D>(null!)
   const planarDistance = Math.hypot(light.x, light.z - subjectZ)
   const lightHeight = light.height ?? defaultLightHeight
-  const lightDistance = Math.hypot(planarDistance - 1.2, lightHeight - lightTargetHeight(light))
+  const lightDistance = emitterDistance(light, subjectZ)
 
   useEffect(() => {
     if (lightRef.current && targetRef.current) {
@@ -246,7 +254,7 @@ function StudioLight({ light, subjectZ, isSelected, onSelect, showSpotPoint }: {
       distance={light.distance ?? 0} 
       color={lightColor} 
       angle={beamAngle} 
-      penumbra={light.penumbra ?? 0.3} 
+      penumbra={penumbraOf(light)} 
     />
     <object3D ref={targetRef} position={[0, lightTargetHeight(light), -planarDistance]} />
     {light.showHelper !== false && <BeamVisual height={lightHeight} targetHeight={lightTargetHeight(light)} planarDistance={planarDistance} angle={beamAngle} color={beamColor} />}
@@ -291,8 +299,8 @@ function Studio({ lights, subjectZ, cameraDistance, subjectRotY, selected, onSel
 function LightPanel({ light, subjectZ, onEdit, onPolar, onClose, showSpotPoint, setShowSpotPoint }: { light: Light; subjectZ: number; onEdit: (patch: Partial<Light>) => void; onPolar: (angle: number, distance: number) => void; onClose: () => void; showSpotPoint: boolean; setShowSpotPoint: (val: boolean) => void }) {
   const planarDistance = Math.hypot(light.x, light.z - subjectZ)
   const angle = Math.round(Math.atan2(light.x, light.z - subjectZ) * 180 / Math.PI)
-  const beamAngle = light.angle ?? modifierBeamAngle(light.modifier)
-  const beamLength = Math.hypot(planarDistance - 1.2, (light.height ?? defaultLightHeight) - lightTargetHeight(light))
+  const beamAngle = beamAngleOf(light, subjectZ)
+  const beamLength = emitterDistance(light, subjectZ)
   return <div className="panel-editor">
     <div className="panel-editor-head">
       <button type="button" className="panel-back" onClick={onClose} title="Retour à la sidebar">←</button>
@@ -311,8 +319,8 @@ function LightPanel({ light, subjectZ, onEdit, onPolar, onClose, showSpotPoint, 
     <label>Intensité <output>× {(light.intensity ?? 1).toFixed(1)}</output><input type="range" min={0} max={3} step={.1} value={light.intensity ?? 1} onChange={event => onEdit({ intensity: +event.target.value })} /></label>
     <label>Couleur <output>{light.color ?? '#e7f4ff'}</output><input type="color" value={light.color ?? '#e7f4ff'} onChange={event => onEdit({ color: event.target.value })} /></label>
     <label>Coupure <output>{light.distance ?? 0} m</output><input type="range" min={0} max={20} step={.5} value={light.distance ?? 0} onChange={event => onEdit({ distance: +event.target.value })} /></label>
-    <label>Angle du faisceau <output>{Math.round(beamAngle * 180 / Math.PI)}°</output><input type="range" min={5} max={70} step={1} value={Math.round(beamAngle * 180 / Math.PI)} onChange={event => onEdit({ angle: +event.target.value * Math.PI / 180 })} /></label>
-    <label>Pénombre <output>{(light.penumbra ?? .3).toFixed(2)}</output><input type="range" min={0} max={1} step={.05} value={light.penumbra ?? .3} onChange={event => onEdit({ penumbra: +event.target.value })} /></label>
+    <label>Angle du faisceau <output>{Math.round(beamAngle * 180 / Math.PI)}°{light.angle === undefined ? ' · auto' : ''}</output><input type="range" min={5} max={70} step={1} value={Math.round(beamAngle * 180 / Math.PI)} onChange={event => onEdit({ angle: +event.target.value * Math.PI / 180 })} />{light.angle !== undefined && <button type="button" className="toggle" onClick={() => onEdit({ angle: undefined })}>Ajuster au buste automatiquement</button>}</label>
+    <label>Pénombre <output>{penumbraOf(light).toFixed(2)}</output><input type="range" min={0} max={1} step={.05} value={penumbraOf(light)} onChange={event => onEdit({ penumbra: +event.target.value })} /></label>
     <label>Déclin <output>{(light.decay ?? 2).toFixed(1)}</output><input type="range" min={1} max={2} step={.1} value={light.decay ?? 2} onChange={event => onEdit({ decay: +event.target.value })} /></label>
     <div className="panel-group">Ombre</div>
     <label>Focus <output>{(light.focus ?? 1).toFixed(2)}</output><input type="range" min={0} max={1} step={.05} value={light.focus ?? 1} onChange={event => onEdit({ focus: +event.target.value })} /></label>
@@ -496,7 +504,7 @@ export function App() {
     <section className="workspace">
       <aside className="library"><span className="eyebrow">SIMULATEUR E-LEARNING</span><h1 className="brand">Studio Light Lab</h1><h2>Schémas de lumière</h2><p>Point de départ, modifiable ensuite.</p><div className="preset-list">{setups.map(s => <button className={s.id === activeSetup ? 'preset-active' : ''} key={s.id} onClick={() => apply(s.id)}><strong>{s.label}</strong><span>{s.description}</span><span className="preset-badge">{correctBySetup[s.id]}/3</span></button>)}</div>{answeredTotal > 0 && <div className="results-block"><span className="eyebrow">RÉSULTATS</span><button type="button" className="results-cta" onClick={() => setEndOpen(true)}>Voir mes résultats</button></div>}<footer className="library-foot">© 2026 Studio Light Lab · CC BY-NC-SA 4.0</footer></aside>
       <section className="scene"><div className="scene-header"><div><span className="eyebrow">SCHÉMA ACTIF • {selectedSetup.label.toUpperCase()}</span><h2>Placez vos sources autour du sujet</h2></div><span className="tip">Plateau 10 × 10 m • 1 case = 0,5 m</span></div><div className="quiz-anchor">{!introOpen && <QuizTimer seconds={180} paused={quizOpen} correct={correctBySetup[activeSetup]} onFire={fireQuestion} />}{tipVisible && <div className="info-pop"><div className="info-pop-head"><span className="eyebrow">LE SAVIEZ-VOUS ? • {selectedSetup.label.toUpperCase()}</span><button type="button" className="info-close" onClick={() => setTipVisible(false)}>×</button></div><LightingReference setupId={selectedSetup.id} label={selectedSetup.label} /><p>{tip}</p></div>}</div><Studio lights={lights} subjectZ={subjectZ} cameraDistance={cameraDistance} subjectRotY={subjectRotY} selected={selected} onSelect={setSelected} showSpotPoint={showSpotPoint} setShowSpotPoint={setShowSpotPoint} canvasRef={previewRef} cameraHeight={cameraHeight} focalLength={focalLength} />{!introOpen && !quizOpen && !tipVisible && <InfoTimer seconds={60} paused={false} onFire={showNextTip} />}</section>
-      <aside className="controls">{(() => { const selectedLight = lights.find(light => light.id === selected); if (selectedLight) return <LightPanel light={selectedLight} subjectZ={subjectZ} onEdit={patch => editLight(selectedLight.id, patch)} onPolar={(angle, distance) => editPolar(selectedLight.id, angle, distance)} onClose={() => setSelected(null)} showSpotPoint={showSpotPoint} setShowSpotPoint={setShowSpotPoint} />; return <><div className="panel-section">Cadrage</div><PreviewWindow canvasRef={previewRef} /><button type="button" className="photo-btn" onClick={takePhoto}>Prendre une photo</button><div className="panel-section">Étape 1 : Plateau</div><p className="control-intro">Régler votre cadrage et le positionnement de Vénus.</p><details className="light-editor" open={openTab === 'boitier'} onToggle={event => { if (event.currentTarget.open) setOpenTab('boitier'); else setOpenTab(tab => tab === 'boitier' ? null : tab) }}><summary><span>Boîtier</span></summary><div className="light-editor-content"><label>Distance <output>{cameraDistance.toFixed(1)} m</output><input type="range" min="1.5" max="4" step=".1" value={cameraDistance} onChange={e => setCameraDistance(+e.target.value)} /></label><label>Hauteur <output>{cameraHeight.toFixed(1)} m</output><input type="range" min="0.6" max="2.2" step=".1" value={cameraHeight} onChange={e => setCameraHeight(+e.target.value)} /></label><label>Focale <output>{focalLength} mm</output><input type="range" min="24" max="200" step="1" value={focalLength} onChange={e => setFocalLength(+e.target.value)} /></label><div className="lesson"><span>À observer</span><p>La distance et le modeleur déterminent ici la contribution de chaque source.</p></div></div></details><details className="light-editor" open={openTab === 'sujet'} onToggle={event => { if (event.currentTarget.open) setOpenTab('sujet'); else setOpenTab(tab => tab === 'sujet' ? null : tab) }}><summary><span>Sujet</span></summary><div className="light-editor-content"><label>Avancer / reculer <output>{subjectZ.toFixed(1)} m</output><input type="range" min="-2" max=".5" step=".25" value={subjectZ} onChange={e => setSubjectZ(+e.target.value)} /></label><label>Orientation (face) <output>{subjectRotY}°</output><input type="range" min="-180" max="180" step="1" value={subjectRotY} onChange={e => setSubjectRotY(+e.target.value)} /></label><p className="inverse-helper">Les axes des lumières et le cadrage suivent automatiquement le sujet.</p></div></details><div className="panel-section">Étape 2 : Sources lumineuses</div><p className="control-intro">Régler les lumières principale et de remplissage pour correspondre aux schémas de lumière.</p><div className="source-list">{lights.map(light => { const title = light.id === 'key' ? 'Principale' : light.name; const beamAngleLabel = modifierBeamAngle(light.modifier); return <div className="source-row" key={light.id}><button type="button" className={`source-button ${selected === light.id ? 'active' : ''}`} onClick={() => setSelected(light.id)}><strong>{title}</strong><span>{light.enabled ? `${Math.round(beamAngleLabel * 180 / Math.PI)}° · ${light.modifier} · ${light.power}%` : 'Source masquée'}</span></button><label className="source-mask" title="Masquer la source"><input type="checkbox" checked={!light.enabled} onChange={event => editLight(light.id, { enabled: !event.target.checked })} /><span>Masquer</span></label></div> })}</div></>})()}</aside>
+      <aside className="controls">{(() => { const selectedLight = lights.find(light => light.id === selected); if (selectedLight) return <LightPanel light={selectedLight} subjectZ={subjectZ} onEdit={patch => editLight(selectedLight.id, patch)} onPolar={(angle, distance) => editPolar(selectedLight.id, angle, distance)} onClose={() => setSelected(null)} showSpotPoint={showSpotPoint} setShowSpotPoint={setShowSpotPoint} />; return <><div className="panel-section">Cadrage</div><PreviewWindow canvasRef={previewRef} /><button type="button" className="photo-btn" onClick={takePhoto}>Prendre une photo</button><div className="panel-section">Étape 1 : Plateau</div><p className="control-intro">Régler votre cadrage et le positionnement de Vénus.</p><details className="light-editor" open={openTab === 'boitier'} onToggle={event => { if (event.currentTarget.open) setOpenTab('boitier'); else setOpenTab(tab => tab === 'boitier' ? null : tab) }}><summary><span>Boîtier</span></summary><div className="light-editor-content"><label>Distance <output>{cameraDistance.toFixed(1)} m</output><input type="range" min="1.5" max="4" step=".1" value={cameraDistance} onChange={e => setCameraDistance(+e.target.value)} /></label><label>Hauteur <output>{cameraHeight.toFixed(1)} m</output><input type="range" min="0.6" max="2.2" step=".1" value={cameraHeight} onChange={e => setCameraHeight(+e.target.value)} /></label><label>Focale <output>{focalLength} mm</output><input type="range" min="24" max="200" step="1" value={focalLength} onChange={e => setFocalLength(+e.target.value)} /></label><div className="lesson"><span>À observer</span><p>La distance et le modeleur déterminent ici la contribution de chaque source.</p></div></div></details><details className="light-editor" open={openTab === 'sujet'} onToggle={event => { if (event.currentTarget.open) setOpenTab('sujet'); else setOpenTab(tab => tab === 'sujet' ? null : tab) }}><summary><span>Sujet</span></summary><div className="light-editor-content"><label>Avancer / reculer <output>{subjectZ.toFixed(1)} m</output><input type="range" min="-2" max=".5" step=".25" value={subjectZ} onChange={e => setSubjectZ(+e.target.value)} /></label><label>Orientation (face) <output>{subjectRotY}°</output><input type="range" min="-180" max="180" step="1" value={subjectRotY} onChange={e => setSubjectRotY(+e.target.value)} /></label><p className="inverse-helper">Les axes des lumières et le cadrage suivent automatiquement le sujet.</p></div></details><div className="panel-section">Étape 2 : Sources lumineuses</div><p className="control-intro">Régler les lumières principale et de remplissage pour correspondre aux schémas de lumière.</p><div className="source-list">{lights.map(light => { const title = light.id === 'key' ? 'Principale' : light.name; const beamAngleLabel = beamAngleOf(light, subjectZ); return <div className="source-row" key={light.id}><button type="button" className={`source-button ${selected === light.id ? 'active' : ''}`} onClick={() => setSelected(light.id)}><strong>{title}</strong><span>{light.enabled ? `${Math.round(beamAngleLabel * 180 / Math.PI)}° · ${light.modifier} · ${light.power}%` : 'Source masquée'}</span></button><label className="source-mask" title="Masquer la source"><input type="checkbox" checked={!light.enabled} onChange={event => editLight(light.id, { enabled: !event.target.checked })} /><span>Masquer</span></label></div> })}</div></>})()}</aside>
     </section>
   </main>
 }
