@@ -41,6 +41,11 @@ export function SubjectPanel(p: Props) {
       {backdropColors.map(color => <button key={color.id} type="button" className={p.backdrop.color === color.value ? 'swatch active' : 'swatch'} onClick={() => p.setBackdrop({ ...p.backdrop, color: color.value })}><span style={{ background: color.value }} />{t(color.key)}</button>)}
     </div>}
     <Switch checked={p.background.enabled} onChange={enabled => p.setBackground({ ...p.background, enabled, })} label={t('subject.bgLight')} />
-    {p.background.enabled && <label className="field">{t('subject.power')} <output>{p.background.power} %</output><Range min="0" max="100" value={p.background.power} onChange={e => p.setBackground({ ...p.background, power: +e.target.value })} /></label>}
+    {p.background.enabled && <>
+      <label className="field">{t('subject.power')} <output>{p.background.power} %</output><Range min="0" max="100" value={p.background.power} onChange={e => p.setBackground({ ...p.background, power: +e.target.value })} /></label>
+      <label className="field">{t('subject.bgAngle')} <output>{p.background.angle}° · {p.background.angle === 0 ? t('light.axis') : p.background.angle < 0 ? t('light.left') : t('light.right')}</output><Range min="-60" max="60" step="1" value={p.background.angle} onChange={e => p.setBackground({ ...p.background, angle: +e.target.value })} /></label>
+      <label className="field">{t('subject.bgHeight')} <output>{num(p.background.height, 2)} m</output><Range min=".2" max="2.4" step=".05" value={p.background.height} onChange={e => p.setBackground({ ...p.background, height: +e.target.value })} /></label>
+      <p className="field-hint">{t('subject.bgHint')}</p>
+    </>}
   </div>
 }

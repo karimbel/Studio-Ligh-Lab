@@ -14,7 +14,8 @@ const CAMERA_MODEL = 'models/canon_eos_60d__ef_85mm_f1.4l_is_usm_lens/scene.gltf
 const GUIDE_LAYER = 1 // repères (faisceaux, points, boîtier) : visibles dans la vue studio, jamais dans l'aperçu ni la photo
 
 export type Backdrop = { visible: boolean; color: string }
-export type BackgroundLight = { enabled: boolean; power: number; color: string }
+/** Lumière de fond : posée entre le sujet et le fond, elle éclaire le papier. angle = orientation gauche/droite (°), height = hauteur de la lampe (m). */
+export type BackgroundLight = { enabled: boolean; power: number; color: string; angle: number; height: number }
 export type CaptureFn = () => string
 
 const onGuideLayer = (object: Object3D | null) => { object?.traverse(child => child.layers.set(GUIDE_LAYER)) }
@@ -156,10 +157,18 @@ function BackgroundSpot({ light }: { light: BackgroundLight }) {
   const target = useRef<Object3D>(null!)
   useEffect(() => { if (spot.current && target.current) spot.current.target = target.current }, [light.enabled])
   if (!light.enabled) return null
+  const reach = 1.1 // distance lampe → fond
+  // une lampe basse vise le centre du fond, une lampe haute vise plus haut
+  const targetY = 1.6 + (light.height - .35) * .5
+  const targetX = Math.tan(light.angle * Math.PI / 180) * reach
+  const position: [number, number, number] = [0, light.height, BACKDROP_Z + reach]
   return <group>
-    <spotLight ref={spot} position={[0, .35, BACKDROP_Z + 1.1]} intensity={light.power * .12} angle={Math.PI / 4.2} penumbra={.85} decay={2} color={light.color} />
-    <object3D ref={target} position={[0, 1.6, BACKDROP_Z]} />
-    <mesh position={[0, .35, BACKDROP_Z + 1.1]} ref={onGuideLayer}><sphereGeometry args={[.06, 12, 12]} /><meshBasicMaterial color={light.color} /></mesh>
+    <spotLight ref={spot} position={position} intensity={light.power * .12} angle={Math.PI / 4.2} penumbra={.85} decay={2} color={light.color} />
+    <object3D ref={target} position={[targetX, targetY, BACKDROP_Z]} />
+    <group ref={onGuideLayer}>
+      <mesh position={position}><sphereGeometry args={[.06, 12, 12]} /><meshBasicMaterial color={light.color} /></mesh>
+      <Line points={[position, [targetX, targetY, BACKDROP_Z]]} color={light.color} transparent opacity={.5} />
+    </group>
   </group>
 }
 

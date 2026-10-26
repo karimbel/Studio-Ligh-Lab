@@ -3,42 +3,72 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { challengeStart, setups } from './content/setups'
 import { knowledgeBySetup, questionsBySetup } from './content/questions'
-import { evaluate, isSolved } from './challenge'
+import { defaultView, evaluate, isSolved, referenceView } from './challenge'
 import { dictionaries } from './i18n'
-import { HEAD_TURN, azimuthDeg, cameraPose, elevationDeg, fillRatio, fittedBeamAngle, placeLights, polarToXZ, type Light } from './model'
+import { HEAD_TURN, azimuthDeg, cameraPose, elevationDeg, faceTurnDeg, fillRatio, fittedBeamAngle, placeLights, polarToXZ, type Light } from './model'
 
 describe('schémas et défi', () => {
-  it.each(setups.map(s => [s.id, s] as const))('le preset %s réussit son propre défi', (_, setup) => {
-    const checks = evaluate(setup.challenge, setup.lights, 0)
+  const placed = (setup: typeof setups[number], subjectRotY = 0, subjectZ = 0) => {
+    const view = referenceView(setup.challenge, subjectRotY)
+    return { view, lights: placeLights(setup.lights, subjectZ, view.cameraAngle) }
+  }
+
+  it.each(setups.map(s => [s.id, s] as const))('le preset %s, cadré comme sa référence, réussit son défi', (_, setup) => {
+    const { view, lights } = placed(setup)
+    const checks = evaluate(setup.challenge, lights, 0, view)
     expect(checks.filter(c => !c.ok)).toEqual([])
-    expect(isSolved(checks)).toBe(true)
   })
 
   it.each(setups.map(s => [s.id, s] as const))('le point de départ du défi %s ne le réussit pas', (_, setup) => {
-    expect(isSolved(evaluate(setup.challenge, challengeStart(), 0))).toBe(false)
+    const view = { ...defaultView, cameraHeight: 1.45 }
+    expect(isSolved(evaluate(setup.challenge, placeLights(challengeStart(), 0, 0), 0, view))).toBe(false)
   })
 
-  it('les presets restent valides quand le sujet recule', () => {
+  it.each([-90, 0, 45, 120])('les presets restent valides quand la Vénus a pivoté de %s°', rot => {
     for (const setup of setups) {
-      const moved = setup.lights.map(light => ({ ...light, z: light.z - 1.25 }))
-      expect(isSolved(evaluate(setup.challenge, moved, -1.25))).toBe(true)
+      const { view, lights } = placed(setup, rot, -1.25)
+      expect(isSolved(evaluate(setup.challenge, lights, -1.25, view)), `${setup.id} @ ${rot}°`).toBe(true)
     }
   })
 
-  it.each([-120, -45, 30, 90, 180])('les presets réussissent leur défi quand le boîtier a tourné de %s°', angle => {
-    for (const setup of setups) {
-      const placed = placeLights(setup.lights, 0, angle)
-      // le visage tourne avec le boîtier pour garder le même point de vue
-      expect(isSolved(evaluate(setup.challenge, placed, 0, { cameraAngle: angle, faceYaw: HEAD_TURN + angle })), `${setup.id} @ ${angle}°`).toBe(true)
-    }
+  it('les références de face placent le boîtier face au visage', () => {
+    const rembrandt = setups.find(s => s.id === 'rembrandt')!
+    expect(Math.abs(faceTurnDeg(referenceView(rembrandt.challenge, 0)))).toBeLessThan(5)
+  })
+
+  it('tourner le boîtier hors de la référence est signalé dans le cadrage', () => {
+    const rembrandt = setups.find(s => s.id === 'rembrandt')!
+    const { view, lights } = placed(rembrandt)
+    const checks = evaluate(rembrandt.challenge, lights, 0, { ...view, cameraAngle: view.cameraAngle + 40 })
+    const face = checks.find(c => c.id === 'faceTurn')!
+    expect(face.ok).toBe(false)
+    expect(face.hint?.key).toBe('hint.orbitLeft')
+  })
+
+  it('un remplissage du même côté que la principale est signalé', () => {
+    const rembrandt = setups.find(s => s.id === 'rembrandt')!
+    const { view, lights } = placed(rembrandt)
+    const key = lights.find(l => l.id === 'key')!
+    const sameSide = lights.map(l => l.id === 'fill' ? { ...l, x: key.x, z: key.z } : l)
+    expect(evaluate(rembrandt.challenge, sameSide, 0, view).find(c => c.id === 'fillSide')?.ok).toBe(false)
+  })
+
+  it('le cadrage guide la distance et la focale', () => {
+    const butterfly = setups.find(s => s.id === 'butterfly')!
+    const { view, lights } = placed(butterfly)
+    const tooFar = evaluate(butterfly.challenge, lights, 0, { ...view, cameraDistance: 4 }).find(c => c.id === 'frame')!
+    expect(tooFar.hint?.key).toBe('hint.cameraCloser')
+    const wide = evaluate(butterfly.challenge, lights, 0, { ...view, focal: 35 }).find(c => c.id === 'focal')!
+    expect(wide.hint?.key).toBe('hint.focalLonger')
   })
 
   it('broad et short s’inversent quand le visage se tourne de l’autre côté', () => {
     const broad = setups.find(s => s.id === 'broad')!
     const short = setups.find(s => s.id === 'short')!
-    const facingLeft = { cameraAngle: 0, faceYaw: -HEAD_TURN }
-    expect(isSolved(evaluate(broad.challenge, broad.lights, 0, facingLeft))).toBe(false)
-    expect(isSolved(evaluate(broad.challenge, short.lights, 0, facingLeft))).toBe(true)
+    const facingLeft = { ...defaultView, cameraAngle: 2 * HEAD_TURN, subjectRotY: 0 } // visage tourné de -35° : vers la gauche de l'image
+    const spec = { ...broad.challenge, faceTurn: [-50, -20] as [number, number] }
+    expect(isSolved(evaluate(spec, placeLights(broad.lights, 0, facingLeft.cameraAngle), 0, facingLeft))).toBe(false)
+    expect(isSolved(evaluate(spec, placeLights(short.lights, 0, facingLeft.cameraAngle), 0, facingLeft))).toBe(true)
   })
 
   it('le boîtier tourne autour du sujet à distance constante', () => {
@@ -46,12 +76,6 @@ describe('schémas et défi', () => {
       const { eye } = cameraPose(angle, 2.5, 1.7, -1)
       expect(Math.hypot(eye[0], eye[2] + 1)).toBeCloseTo(Math.hypot(.1, 2.5), 5)
     }
-  })
-
-  it('broad et short éclairent des côtés opposés', () => {
-    const side = (id: string) => Math.sign(azimuthDeg(setups.find(s => s.id === id)!.lights[0], 0))
-    expect(side('broad')).toBe(-1)
-    expect(side('short')).toBe(1)
   })
 
   it('le clamshell a bien une source sous le visage, devant le sujet', () => {
@@ -67,9 +91,10 @@ describe('schémas et défi', () => {
       const lights: Light[] = (['key', 'fill', 'rim'] as const).map(id => ({
         id, ...polarToXZ(rng() * 360 - 180, 1.5 + rng() * 1.5, 0), power: Math.round(rng() * 100), modifier: 'Softbox', enabled: rng() > .15, height: .5 + rng() * 3,
       }))
-      for (const setup of setups) for (const check of evaluate(setup.challenge, lights, 0)) if (check.hint) keys.add(check.hint.key)
+      const view = { cameraAngle: rng() * 360 - 180, cameraDistance: 1.5 + rng() * 2.5, cameraHeight: .6 + rng() * 1.6, focal: 24 + rng() * 176, subjectRotY: rng() * 360 - 180 }
+      for (const setup of setups) for (const check of evaluate(setup.challenge, lights, 0, view)) if (check.hint) keys.add(check.hint.key)
     }
-    expect(keys.size).toBeGreaterThan(10)
+    expect(keys.size).toBeGreaterThan(20)
     for (const key of keys) {
       expect(dictionaries.fr, key).toHaveProperty([key])
       expect(dictionaries.en, key).toHaveProperty([key])

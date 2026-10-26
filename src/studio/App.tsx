@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Studio, type Backdrop, type BackgroundLight, type CaptureFn } from './scene/Studio'
 import { challengeStart, setups } from './content/setups'
 import { knowledgeBySetup, questionsBySetup, type Question } from './content/questions'
-import { evaluate, isSolved } from './challenge'
-import { DEFAULT_CAMERA_DISTANCE, DEFAULT_CAMERA_HEIGHT, DEFAULT_COLOR, DEFAULT_FOCAL, HEAD_TURN, clampDistance, placeLights, polarToXZ, wrapDeg, type Light, type LightId } from './model'
+import { evaluate, isSolved, referenceView } from './challenge'
+import { DEFAULT_COLOR, clampDistance, placeLights, polarToXZ, wrapDeg, type Light, type LightId, type View } from './model'
 import { I18nProvider, detectLang, makeTranslator, type Lang } from './i18n'
 import { loadLang, saveLang } from './storage'
 import { LightPanel, RatioMeter } from './ui/LightPanel'
@@ -29,17 +29,20 @@ export function App() {
 
   // Plateau
   const [activeSetup, setActiveSetup] = useState(setups[0].id)
-  const [lights, setLights] = useState<Light[]>(setups[0].lights)
+  // au départ, le boîtier est placé comme sur la référence du premier schéma
+  const initialView = useMemo(() => referenceView(setups[0].challenge, 0), [])
+  const [lights, setLights] = useState<Light[]>(() => placeLights(setups[0].lights, 0, initialView.cameraAngle))
   const [subjectZ, setSubjectZ] = useState(0)
   const [subjectRotY, setSubjectRotY] = useState(0)
-  const [cameraAngle, setCameraAngleRaw] = useState(0)
+  const [cameraAngle, setCameraAngleRaw] = useState(initialView.cameraAngle)
   const setCameraAngle = (angle: number) => setCameraAngleRaw(Math.round(wrapDeg(angle)))
-  const [cameraDistance, setCameraDistance] = useState(DEFAULT_CAMERA_DISTANCE)
-  const [cameraHeight, setCameraHeight] = useState(DEFAULT_CAMERA_HEIGHT)
-  const [focalLength, setFocalLength] = useState(DEFAULT_FOCAL)
+  const [cameraDistance, setCameraDistance] = useState(initialView.cameraDistance)
+  const [cameraHeight, setCameraHeight] = useState(initialView.cameraHeight)
+  const [focalLength, setFocalLength] = useState(initialView.focal)
+  const setCameraView = (view: View) => { setCameraAngle(view.cameraAngle); setCameraDistance(view.cameraDistance); setCameraHeight(view.cameraHeight); setFocalLength(view.focal) }
   const [showSpotPoint, setShowSpotPoint] = useState(true)
   const [backdrop, setBackdrop] = useState<Backdrop>({ visible: true, color: backdropColors[0].value })
-  const [background, setBackground] = useState<BackgroundLight>({ enabled: false, power: 45, color: DEFAULT_COLOR })
+  const [background, setBackground] = useState<BackgroundLight>({ enabled: false, power: 45, color: DEFAULT_COLOR, angle: 0, height: .35 })
   const [tab, setTab] = useState<Tab>('subject')
   const [selected, setSelected] = useState<LightId | null>(null)
 
@@ -114,7 +117,10 @@ export function App() {
 
   const apply = (id: string) => {
     const preset = setups.find(s => s.id === id)!
-    setLights(placeLights(preset.lights, subjectZ, cameraAngle))
+    // le boîtier et les lampes se placent comme sur le rendu recherché
+    const view = referenceView(preset.challenge, subjectRotY)
+    setCameraView(view)
+    setLights(placeLights(preset.lights, subjectZ, view.cameraAngle))
     setActiveSetup(id)
     setChallengeActive(false)
     setJustSolved(false)
@@ -123,10 +129,13 @@ export function App() {
   }
 
   // Défi
-  const checks = useMemo(() => evaluate(setup.challenge, lights, subjectZ, { cameraAngle, faceYaw: HEAD_TURN + subjectRotY }), [setup, lights, subjectZ, cameraAngle, subjectRotY])
+  const view: View = { cameraAngle, cameraDistance, cameraHeight, focal: focalLength, subjectRotY }
+  const checks = useMemo(() => evaluate(setup.challenge, lights, subjectZ, view), [setup, lights, subjectZ, cameraAngle, cameraDistance, cameraHeight, focalLength, subjectRotY])
   const solved = isSolved(checks)
   const startChallenge = () => {
-    setLights(placeLights(challengeStart(), subjectZ, cameraAngle))
+    // tout est déréglé : boîtier dans l'axe et trop bas, lampes déplacées
+    setCameraView({ ...view, cameraAngle: 0, cameraDistance: 2, cameraHeight: 1.45, focal: 85 })
+    setLights(placeLights(challengeStart(), subjectZ, 0))
     setChallengeActive(true)
     setJustSolved(false)
     setTip(null)

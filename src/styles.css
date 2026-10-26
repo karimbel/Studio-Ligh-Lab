@@ -37,7 +37,8 @@ a { color: var(--accent) }
 
 /* ---------- Mise en page ---------- */
 .app { display: grid; grid-template-columns: 276px minmax(420px, 1fr) 330px; grid-template-rows: minmax(0, 1fr); height: 100vh; height: 100dvh; overflow: hidden }
-@media (min-width: 721px) { html, body { overflow: hidden } }
+/* clip (et non hidden) : empêche aussi le navigateur de faire défiler la page en donnant le focus à un élément */
+@media (min-width: 721px) { html, body { overflow: hidden; overflow: clip } }
 aside { background: var(--panel); padding: 24px; overflow: auto; min-height: 0; scrollbar-gutter: stable; scrollbar-width: thin; scrollbar-color: #2d3a4a transparent }
 aside::-webkit-scrollbar { width: 8px }
 aside::-webkit-scrollbar-thumb { background: #2d3a4a; border-radius: 4px }
@@ -159,6 +160,22 @@ aside::-webkit-scrollbar-track { background: transparent }
 .checks .ko .check-icon { background: rgba(255, 154, 162, .13); color: var(--ko) }
 .checks .ok strong { color: #cfeedd }
 .diagnostic-actions { margin-top: 12px }
+.diagnostic:not(.is-collapsed) { max-height: calc(100% - 28px); overflow-y: auto; scrollbar-width: thin; scrollbar-color: #2d3a4a transparent }
+.diag-groups { display: grid; gap: 6px; margin-top: 10px }
+.diag-group { padding: 7px 9px; border: 1px solid #233040; border-radius: 9px; background: rgba(255, 255, 255, .02) }
+.diag-group header { display: flex; align-items: center; gap: 7px; font-size: 11px }
+.diag-group header strong { flex: 1; font-weight: 700; color: var(--text-2) }
+.diag-group-icon { display: grid; place-items: center }
+.diag-framing .diag-group-icon { color: #7fc9f3 }
+.diag-key .diag-group-icon { color: var(--key) }
+.diag-fill .diag-group-icon { color: var(--fill) }
+.diag-rim .diag-group-icon { color: var(--rim) }
+.diag-group-state { display: grid; place-items: center; font: 600 10px var(--mono); color: #ffd8a8 }
+.diag-group.is-ok .diag-group-state { color: var(--ok) }
+.diag-group.is-ok header strong { color: #cfeedd }
+.diag-group.has-issues { border-color: #3a3426; background: rgba(255, 216, 168, .03) }
+.diag-group .checks { margin-top: 7px; gap: 6px }
+.diag-all-good { margin-top: 8px; color: #bfe9cf }
 .diagnostic-win { margin-top: 10px; padding: 10px; border-radius: 9px; background: rgba(62, 148, 92, .16); border: 1px solid rgba(104, 204, 143, .45) }
 .diagnostic-win strong { color: var(--ok); font-size: 13px }
 .diagnostic-win p { color: #bfe9cf; font-size: 11px; line-height: 1.5; margin-top: 3px }
@@ -238,7 +255,7 @@ input[type=color] { width: 100%; height: 26px; padding: 0; border: 1px solid var
 .advanced summary::after { content: '+'; color: #8fcaee }
 .advanced[open] summary::after { content: '−' }
 .advanced[open] { padding-bottom: 10px }
-.switch { display: flex; align-items: center; gap: 10px; margin: 4px 0 6px; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text) }
+.switch { position: relative; display: flex; align-items: center; gap: 10px; margin: 4px 0 6px; cursor: pointer; font-size: 12px; font-weight: 700; color: var(--text) }
 .switch input { position: absolute; opacity: 0; pointer-events: none }
 .switch-track { position: relative; width: 34px; height: 19px; border-radius: 10px; background: #2a3342; transition: .2s; flex: none }
 .switch-track span { position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: #8a9bb2; transition: .2s }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useI18n, type TKey } from '../i18n'
-import type { Check } from '../challenge'
-import { IconCheck, IconCross, IconTarget } from './icons'
+import { groupOrder, type Check, type CheckGroup } from '../challenge'
+import { IconCamera, IconCheck, IconCross, IconFill, IconKey, IconRim, IconTarget } from './icons'
 
 type Props = {
   checks: Check[]
@@ -12,11 +12,21 @@ type Props = {
   onAbandon: () => void
 }
 
+const groupIcon: Record<CheckGroup, JSX.Element> = {
+  framing: <IconCamera size={14} />,
+  key: <IconKey size={14} />,
+  fill: <IconFill size={14} />,
+  rim: <IconRim size={14} />,
+}
+
+/** Compare la scène au rendu recherché, groupe par groupe : seuls les points à corriger restent dépliés. */
 export function Diagnostic({ checks, active, done, justSolved, onStart, onAbandon }: Props) {
   const { t } = useI18n()
   const [collapsed, setCollapsed] = useState(() => typeof window !== 'undefined' && !!window.matchMedia?.('(max-width: 720px)').matches)
   useEffect(() => { if (active || justSolved) setCollapsed(false) }, [active, justSolved])
   const solved = checks.every(check => check.ok)
+  const groups = groupOrder.map(group => ({ group, items: checks.filter(check => check.group === group) })).filter(g => g.items.length > 0)
+
   return <div className={`diagnostic ${active ? 'is-active' : ''} ${justSolved ? 'is-solved' : ''} ${collapsed ? 'is-collapsed' : ''}`}>
     <button type="button" className="diagnostic-head" onClick={() => setCollapsed(c => !c)} aria-expanded={!collapsed}>
       <span className="eyebrow">{active ? t('diag.challenge') : t('diag.title')}</span>
@@ -25,16 +35,28 @@ export function Diagnostic({ checks, active, done, justSolved, onStart, onAbando
     {!collapsed && <>
       {justSolved && <div className="diagnostic-win"><strong>{t('diag.solved')}</strong><p>{t('diag.solvedText')}</p></div>}
       {active && !justSolved && <p className="field-hint">{t('diag.startHint')}</p>}
-      <ul className="checks">
-        {checks.map(check => <li key={check.id} className={check.ok ? 'ok' : 'ko'}>
-          <span className="check-icon">{check.ok ? <IconCheck size={14} /> : <IconCross size={14} />}</span>
-          <span>
-            <strong>{t(`check.${check.id}`)}</strong>
-            {!check.ok && check.hint && <em>{t(check.hint.key as TKey, check.hint.vars)}</em>}
-          </span>
-        </li>)}
-      </ul>
-      {!active && solved && !justSolved && <p className="field-hint">{t('diag.allGood')}</p>}
+      <div className="diag-groups">
+        {groups.map(({ group, items }) => {
+          const failing = items.filter(item => !item.ok)
+          return <section key={group} className={`diag-group diag-${group} ${failing.length ? 'has-issues' : 'is-ok'}`}>
+            <header>
+              <span className="diag-group-icon">{groupIcon[group]}</span>
+              <strong>{t(`group.${group}`)}</strong>
+              <span className="diag-group-state">{failing.length ? `${items.length - failing.length}/${items.length}` : <IconCheck size={13} />}</span>
+            </header>
+            {failing.length > 0 && <ul className="checks">
+              {items.map(check => <li key={check.id} className={check.ok ? 'ok' : 'ko'}>
+                <span className="check-icon">{check.ok ? <IconCheck size={12} /> : <IconCross size={12} />}</span>
+                <span>
+                  <strong>{t(`check.${check.id}`)}</strong>
+                  {!check.ok && check.hint && <em>{t(check.hint.key as TKey, check.hint.vars)}</em>}
+                </span>
+              </li>)}
+            </ul>}
+          </section>
+        })}
+      </div>
+      {!active && solved && !justSolved && <p className="field-hint diag-all-good">{t('diag.allGood')}</p>}
       <div className="diagnostic-actions">
         {active
           ? <button type="button" className="ghost-btn" onClick={onAbandon}>{t('diag.abandon')}</button>

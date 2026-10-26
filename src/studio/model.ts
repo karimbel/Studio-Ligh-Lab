@@ -55,8 +55,9 @@ export const azimuthDeg = (light: Light, subjectZ: number) => deg(Math.atan2(lig
 /** Élévation de la tête de lampe vue depuis le buste, en degrés. Négatif = source plus basse que la cible. */
 export const elevationDeg = (light: Light, subjectZ: number) => deg(Math.atan2(lightHeight(light) - lightTargetHeight(light), Math.max(emitterPlanar(light, subjectZ), .01)))
 
-/** La tête de la Vénus est naturellement tournée d'environ 40° vers la droite de l'image (x positif). */
-export const HEAD_TURN = 40
+/** La tête de la Vénus est naturellement tournée d'environ 35° vers la droite de l'image (x positif) :
+ *  le visage est de face quand le boîtier a tourné de 35° autour d'elle (mesuré sur rendus). */
+export const HEAD_TURN = 35
 export const wrapDeg = (degrees: number) => ((degrees % 360) + 540) % 360 - 180
 /** Azimut de la source vu depuis le boîtier : 0° = axe du boîtier, négatif = gauche de l'image. */
 export const relAzimuthDeg = (light: Light, subjectZ: number, cameraAngle: number) => wrapDeg(azimuthDeg(light, subjectZ) - cameraAngle)
@@ -78,6 +79,18 @@ export const cameraPose = (cameraAngle: number, distance: number, height: number
   const target = rotateXZ(CAMERA_SHIFT, FRAMING_OFFSET, cameraAngle)
   return { eye: [eye.x, height, eye.z + subjectZ] as const, target: [target.x, height, target.z + subjectZ] as const }
 }
+
+/** Cadrage : boîtier autour du sujet, focale, rotation de la Vénus. */
+export type View = { cameraAngle: number; cameraDistance: number; cameraHeight: number; focal: number; subjectRotY: number }
+export const CAMERA_HEIGHT_RANGE: [number, number] = [1.6, 1.8] // à hauteur des yeux
+export const FOCAL_RANGE: [number, number] = [70, 135] // focales « portrait »
+export const MIN_CAMERA_DISTANCE = 1.5
+export const MAX_CAMERA_DISTANCE = 4
+/** Orientation du visage vue depuis le boîtier : 0 = de face, > 0 = tourné vers la droite de l'image. */
+export const faceTurnDeg = (view: Pick<View, 'cameraAngle' | 'subjectRotY'>) => wrapDeg(HEAD_TURN + view.subjectRotY - view.cameraAngle)
+/** Hauteur de la scène couverte par l'image (capteur 24 × 36) au niveau du sujet, en mètres. */
+export const frameHeight = (distance: number, focal: number) => (distance - FRAMING_OFFSET) * .024 / (focal / 1000)
+export const distanceForFrame = (height: number, focal: number) => height * (focal / 1000) / .024 + FRAMING_OFFSET
 
 export const polarToXZ = (angleDeg: number, distance: number, subjectZ: number) => ({ x: Math.sin(rad(angleDeg)) * distance, z: subjectZ + Math.cos(rad(angleDeg)) * distance })
 export const clampDistance = (distance: number) => Math.min(MAX_LIGHT_DISTANCE, Math.max(MIN_LIGHT_DISTANCE, distance))
