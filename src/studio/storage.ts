@@ -22,3 +22,19 @@ export function saveLang(lang: Lang) {
     // navigation privée ou stockage bloqué : la langue reste celle du navigateur
   }
 }
+
+export type HelpLevel = 'guided' | 'independent' | 'expert'
+const LEVEL_KEY = 'studio-light-lab:level'
+
+export function loadLevel(): HelpLevel {
+  try {
+    const value = window.localStorage.getItem(LEVEL_KEY)
+    return value === 'independent' || value === 'expert' ? value : 'guided'
+  } catch {
+    return 'guided'
+  }
+}
+
+export function saveLevel(level: HelpLevel) {
+  try { window.localStorage.setItem(LEVEL_KEY, level) } catch { /* stockage indisponible */ }
+}

@@ -194,9 +194,30 @@ aside::-webkit-scrollbar-track { background: transparent }
 .diag-group.has-issues { border-color: #3a3426; background: rgba(255, 216, 168, .03) }
 .diag-group .checks { margin-top: 7px; gap: 6px }
 .diag-all-good { margin-top: 8px; color: #bfe9cf }
-.diag-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 6px }
+.diag-intro { display: grid; gap: 8px; margin-top: 8px }
+.level-toggle { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 3px; background: #0d121a; border: 1px solid #233040; border-radius: 8px }
+.level-toggle button { padding: 5px 4px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); font-size: 10.5px; font-weight: 700 }
+.level-toggle button.active { background: #1d405b; color: #e4f4ff }
+.level-toggle button:hover:not(.active) { color: var(--text) }
+.diag-buttons { display: flex; flex-wrap: wrap; gap: 6px }
+.diag-buttons .ghost-btn { flex: 1 1 0; min-width: 0; width: auto }
+.hint-btn { color: #b8e6ff; border-color: #2f5878 }
+.hint-btn:hover { background: #142636; border-color: #5c97c2 }
+.diag-confirm.confirm-hint { border-color: #2f5878; background: rgba(158, 212, 255, .06) }
+.diag-confirm.confirm-hint p { color: #d6ecff }
+.diag-hint { margin-top: 7px; padding: 8px 9px; border-radius: 7px; background: rgba(158, 212, 255, .08); border: 1px dashed #4f86ad }
+.diag-hint .eyebrow { margin: 0 0 3px; color: #9ed4ff }
+.diag-hint p { font-size: 11px; line-height: 1.45; color: #dcefff }
+.diag-hint small { display: block; margin-top: 3px; font-size: 10px; color: #8fb3cf }
+.diag-group.is-hinted { border-color: #4f86ad }
+.diag-group.is-explain { border-color: #3a3426 }
+.diag-fact { margin-top: 6px; font-size: 11px; line-height: 1.45; color: var(--text) }
+.diag-why { margin-top: 4px; font-size: 10.5px; line-height: 1.45; color: #c9b48f }
+.diag-why b { color: #ffd8a8 }
+.tv-ghost circle { fill: none; stroke: currentColor; stroke-width: .035; stroke-dasharray: .07 .05; animation: ghost 1.4s ease-in-out infinite }
+.tv-ghost .tv-ghost-dot { fill: currentColor; stroke: none; animation: none }
+@keyframes ghost { 50% { opacity: .35 } }
 .diag-buttons .ghost-btn { padding: 8px 6px; font-size: 10.5px }
-.diag-buttons.single { grid-template-columns: 1fr }
 .diag-locked-note { margin-top: 8px; font-size: 10px; color: #7f92aa }
 .solution-btn { color: #ffd8a8; border-color: #6b5634 }
 .solution-btn:hover { background: #2a2216; border-color: #b08850 }

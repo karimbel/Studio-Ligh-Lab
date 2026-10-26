@@ -1,8 +1,8 @@
 import {
   CAMERA_HEIGHT_RANGE, FOCAL_RANGE, HEAD_TURN, MAX_CAMERA_DISTANCE, MIN_CAMERA_DISTANCE, distanceForFrame, elevationDeg, emitterPlanar, faceTurnDeg,
-  fillRatio, frameHeight, lightHeight, lightTargetHeight, relAzimuthDeg, wrapDeg, type Light, type View,
+  fillRatio, frameHeight, lightHeight, lightTargetHeight, lightingRatio, placeLights, relAzimuthDeg, wrapDeg, type Light, type View,
 } from './model'
-import type { ChallengeSpec, Range } from './content/setups'
+import type { ChallengeSpec, Range, Setup } from './content/setups'
 
 export type CheckGroup = 'framing' | 'key' | 'fill' | 'rim'
 export type CheckId = 'faceTurn' | 'cameraHeight' | 'focal' | 'frame' | 'keyAngle' | 'keyHeight' | 'fill' | 'fillSide' | 'fillPlacement' | 'rim'
@@ -122,3 +122,33 @@ export const referenceView = (spec: ChallengeSpec, subjectRotY: number): View =>
   focal: 85,
   subjectRotY,
 })
+
+/** La scène « solution » : boîtier et lampes placés comme le rendu recherché. */
+export function solutionScene(setup: Setup, subjectZ: number, subjectRotY: number) {
+  const view = referenceView(setup.challenge, subjectRotY)
+  return { view, lights: placeLights(setup.lights, subjectZ, view.cameraAngle) }
+}
+
+export type LightFacts = { id: Light['id']; azimuth: number; height: number; elevation: number }
+/** Les réglages de la solution, groupe par groupe (angles des lampes mesurés depuis le boîtier de la solution). */
+export type SolutionFacts = {
+  framing: { angle: number; distance: number; height: number; focal: number }
+  key?: LightFacts
+  fill?: LightFacts & { percent: number; ratio: number; below: boolean }
+  rim?: LightFacts
+}
+
+export function solutionFacts(setup: Setup, subjectZ: number, subjectRotY: number): SolutionFacts {
+  const { view, lights } = solutionScene(setup, subjectZ, subjectRotY)
+  const facts = (light: Light): LightFacts => ({ id: light.id, azimuth: Math.round(relAzimuthDeg(light, subjectZ, view.cameraAngle)), height: lightHeight(light), elevation: Math.round(elevationDeg(light, subjectZ)) })
+  const key = lights.find(l => l.id === 'key' && l.enabled)
+  const fill = lights.find(l => l.id === 'fill' && l.enabled)
+  const rim = lights.find(l => l.id === 'rim' && l.enabled)
+  const ratio = fillRatio(key, fill, subjectZ)
+  return {
+    framing: { angle: view.cameraAngle, distance: view.cameraDistance, height: view.cameraHeight, focal: view.focal },
+    key: key && facts(key),
+    fill: fill && { ...facts(fill), percent: Math.round(ratio * 100 / 5) * 5, ratio: lightingRatio(ratio), below: elevationDeg(fill, subjectZ) < -10 },
+    rim: setup.challenge.rim && rim ? facts(rim) : undefined,
+  }
+}

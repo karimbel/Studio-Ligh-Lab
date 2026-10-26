@@ -3,8 +3,9 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { exerciseStarts, setups } from './content/setups'
 import { knowledgeBySetup, questionsBySetup } from './content/questions'
-import { defaultView, evaluate, isSolved, referenceView } from './challenge'
-import { dictionaries } from './i18n'
+import { defaultView, evaluate, isSolved, referenceView, solutionFacts } from './challenge'
+import { dictionaries, makeTranslator } from './i18n'
+import { factText } from './ui/Diagnostic'
 import { HEAD_TURN, azimuthDeg, cameraPose, elevationDeg, faceTurnDeg, fillRatio, fittedBeamAngle, placeLights, polarToXZ, type Light } from './model'
 
 describe('schémas et défi', () => {
@@ -106,6 +107,45 @@ describe('schémas et défi', () => {
     for (const key of keys) {
       expect(dictionaries.fr, key).toHaveProperty([key])
       expect(dictionaries.en, key).toHaveProperty([key])
+    }
+  })
+})
+
+describe('indice et solution commentée', () => {
+  it('la solution du Rembrandt : visage de face, principale à gauche, remplissage à droite', () => {
+    const facts = solutionFacts(setups.find(s => s.id === 'rembrandt')!, 0, 0)
+    expect(facts.framing.angle).toBe(HEAD_TURN)
+    expect(facts.key!.azimuth).toBeLessThan(-38)
+    expect(facts.fill!.azimuth).toBeGreaterThan(0)
+    expect(facts.rim).toBeUndefined()
+  })
+
+  it.each(['fr', 'en'] as const)('chaque schéma a une solution commentée complète (%s)', lang => {
+    const i18n = makeTranslator(lang, () => {})
+    for (const setup of setups) {
+      expect(setup.why[lang].length, setup.id).toBeGreaterThan(20)
+      const facts = solutionFacts(setup, 0, 0)
+      for (const group of ['framing', 'key', 'fill'] as const) {
+        const text = factText(i18n, group, facts)
+        expect(text, `${setup.id} · ${group}`).toBeTruthy()
+        expect(text, `${setup.id} · ${group}`).not.toMatch(/[{}]|undefined|NaN/)
+      }
+      if (setup.challenge.rim) expect(factText(i18n, 'rim', facts)).toBeTruthy()
+    }
+  })
+
+  it('chaque conseil chiffré a une variante « sans chiffres » pour le niveau Autonome', () => {
+    const numeric = new Set<string>()
+    const rng = (seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647)(7)
+    for (let i = 0; i < 3000; i++) {
+      const lights: Light[] = (['key', 'fill', 'rim'] as const).map(id => ({ id, ...polarToXZ(rng() * 360 - 180, 1.5 + rng() * 1.5, 0), power: Math.round(rng() * 100), modifier: 'Softbox', enabled: true, height: .5 + rng() * 3 }))
+      const view = { cameraAngle: rng() * 360 - 180, cameraDistance: 1.5 + rng() * 2.5, cameraHeight: .6 + rng() * 1.6, focal: 24 + rng() * 176, subjectRotY: 0 }
+      for (const setup of setups) for (const check of evaluate(setup.challenge, lights, 0, view)) if (check.hint?.vars) numeric.add(check.hint.key)
+    }
+    expect(numeric.size).toBeGreaterThan(8)
+    for (const key of numeric) {
+      expect(dictionaries.fr, key).toHaveProperty([`${key}Dir`])
+      expect(dictionaries.en, key).toHaveProperty([`${key}Dir`])
     }
   })
 })

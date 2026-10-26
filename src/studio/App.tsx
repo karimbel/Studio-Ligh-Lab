@@ -2,13 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Studio, type Backdrop, type BackgroundLight, type CaptureFn } from './scene/Studio'
 import { exerciseStarts, setups } from './content/setups'
 import { knowledgeBySetup, questionsBySetup, type Question } from './content/questions'
-import { evaluate, isSolved, referenceView } from './challenge'
-import { DEFAULT_COLOR, clampDistance, placeLights, polarToXZ, wrapDeg, type Light, type LightId, type View } from './model'
+import { evaluate, groupOrder, isSolved, referenceView, solutionFacts, solutionScene } from './challenge'
+import { DEFAULT_COLOR, azimuthDeg, clampDistance, emitterPlanar, placeLights, polarToXZ, wrapDeg, type Light, type LightId, type View } from './model'
 import { I18nProvider, detectLang, makeTranslator, type Lang } from './i18n'
-import { loadLang, saveLang } from './storage'
+import { loadLang, loadLevel, saveLang, saveLevel, type HelpLevel } from './storage'
 import { LightPanel, RatioMeter } from './ui/LightPanel'
 import { SubjectPanel, backdropColors } from './ui/SubjectPanel'
-import { TopView } from './ui/TopView'
+import { TopView, type Ghost } from './ui/TopView'
 import { Diagnostic } from './ui/Diagnostic'
 import { ReferenceCard } from './ui/ReferenceCard'
 import { Preview } from './ui/Preview'
@@ -23,6 +23,9 @@ const TIP_INTERVAL = 60_000
 const SOLUTION_DELAY = 180_000 // 3 minutes d'essai…
 const SOLUTION_GESTURES = 8 // …et au moins 8 manipulations
 const SOLUTION_WRONG_ANSWERS = 2 // ou 2 erreurs aux questions du schéma
+const HINT_DELAY = 60_000 // l'indice se débloque plus tôt : 1 minute…
+const HINT_GESTURES = 3 // …et 3 manipulations
+const HINT_WRONG_ANSWERS = 1 // ou une erreur aux questions
 
 const emptyCounts = () => Object.fromEntries(setups.map(setup => [setup.id, 0])) as Record<string, number>
 
@@ -66,6 +69,9 @@ export function App() {
   const [exerciseStartedAt, setExerciseStartedAt] = useState(() => Date.now())
   const [gestures, setGestures] = useState(0)
   const [wrongAnswers, setWrongAnswers] = useState<Record<string, number>>({})
+  const [hintUsed, setHintUsed] = useState<Record<string, boolean>>({})
+  const [hintActive, setHintActive] = useState(false)
+  const [level, setLevel] = useState<HelpLevel>(loadLevel)
   const [now, setNow] = useState(() => Date.now())
   const [justSolved, setJustSolved] = useState(false)
   const [tip, setTip] = useState<string | null>(null)
@@ -143,6 +149,7 @@ export function App() {
     setJustSolved(false)
     setExerciseStartedAt(Date.now())
     setGestures(0)
+    setHintActive(false)
   }
 
   const apply = (id: string) => {
@@ -162,6 +169,13 @@ export function App() {
     setQuizStars(current => ({ ...current, [activeSetup]: 0 }))
     setChallengeActive(false)
     setJustSolved(false)
+    setHintActive(false)
+  }
+
+  /** L'indice : montre où placer l'élément suivant ; coûte l'étoile du défi, pas celles des questions. */
+  const showHint = () => {
+    setHintUsed(current => ({ ...current, [activeSetup]: true }))
+    setHintActive(true)
   }
 
   // Défi
@@ -184,12 +198,14 @@ export function App() {
     const id = window.setTimeout(() => {
       setChallengeActive(false)
       setJustSolved(true)
-      if (!solutionShown[activeSetup]) setChallengeDone(current => ({ ...current, [activeSetup]: true }))
-      takeShot(!solutionShown[activeSetup])
+      const earned = !solutionShown[activeSetup] && !hintUsed[activeSetup]
+      if (earned) setChallengeDone(current => ({ ...current, [activeSetup]: true }))
+      setHintActive(false)
+      takeShot(earned)
       window.setTimeout(() => setJustSolved(false), 6000)
     }, 900)
     return () => window.clearTimeout(id)
-  }, [challengeActive, solved, activeSetup, solutionShown])
+  }, [challengeActive, solved, activeSetup, solutionShown, hintUsed])
 
   // Questions
   const fireQuestion = () => {
@@ -221,11 +237,29 @@ export function App() {
   const solutionUnlocked = !!solutionShown[activeSetup]
     || (wrongAnswers[activeSetup] ?? 0) >= SOLUTION_WRONG_ANSWERS
     || (now - exerciseStartedAt >= SOLUTION_DELAY && gestures >= SOLUTION_GESTURES)
+  const hintUnlocked = solutionUnlocked || !!hintUsed[activeSetup]
+    || (wrongAnswers[activeSetup] ?? 0) >= HINT_WRONG_ANSWERS
+    || (now - exerciseStartedAt >= HINT_DELAY && gestures >= HINT_GESTURES)
+  useEffect(() => { saveLevel(level) }, [level])
   useEffect(() => {
-    if (!challengeActive || solutionUnlocked) return
+    if (!challengeActive || (solutionUnlocked && hintUnlocked)) return
     const id = window.setInterval(() => setNow(Date.now()), 5000)
     return () => window.clearInterval(id)
-  }, [challengeActive, solutionUnlocked])
+  }, [challengeActive, solutionUnlocked, hintUnlocked])
+
+  // indice : le premier groupe à corriger, et son repère sur le plan d'après la solution
+  const facts = useMemo(() => solutionFacts(setup, subjectZ, subjectRotY), [setup, subjectZ, subjectRotY])
+  const hintGroup = groupOrder.find(group => checks.some(check => check.group === group && !check.ok))
+  const ghost = useMemo<Ghost | undefined>(() => {
+    if (!hintActive || !challengeActive || !hintGroup) return undefined
+    const solution = solutionScene(setup, subjectZ, subjectRotY)
+    if (hintGroup === 'framing') return { kind: 'camera', angle: solution.view.cameraAngle, distance: solution.view.cameraDistance }
+    const light = solution.lights.find(l => l.id === hintGroup)
+    if (!light) return undefined
+    const az = azimuthDeg(light, subjectZ) * Math.PI / 180
+    const e = emitterPlanar(light, subjectZ)
+    return { kind: 'light', id: light.id, x: Math.sin(az) * e, y: Math.cos(az) * e }
+  }, [hintActive, challengeActive, hintGroup, setup, subjectZ, subjectRotY])
 
   const complete = setups.every(s => starsOf(s.id) === 3 || solutionShown[s.id])
   const wasComplete = useRef(complete)
@@ -239,6 +273,7 @@ export function App() {
     setChallengeDone({})
     setSolutionShown({})
     setWrongAnswers({})
+    setHintUsed({})
     setAnswered(0)
     setEndOpen(false)
     apply(setups[0].id)
@@ -301,10 +336,10 @@ export function App() {
           {/* colonne de gauche : astuce puis consignes ; le plan passe à droite */}
           <div className="stage-left">
             <ReferenceCard label={l(setup.label)} reference={setup.reference} tip={tip} collapsed={tipCollapsed} unread={tipUnread} onToggle={() => { setTipCollapsed(c => !c); setTipUnread(false) }} />
-            <Diagnostic canShowSolution={solutionUnlocked} checks={checks} active={challengeActive} done={!!challengeDone[activeSetup]} justSolved={justSolved} solutionShown={!!solutionShown[activeSetup]} onRestart={startExercise} onShowSolution={showSolution} />
+            <Diagnostic canShowSolution={solutionUnlocked} canHint={hintUnlocked} hintActive={hintActive} hintUsed={!!hintUsed[activeSetup]} hintGroup={hintGroup} facts={facts} why={l(setup.why)} level={level} onLevel={setLevel} onShowHint={showHint} checks={checks} active={challengeActive} done={!!challengeDone[activeSetup]} justSolved={justSolved} solutionShown={!!solutionShown[activeSetup]} onRestart={startExercise} onShowSolution={showSolution} />
           </div>
           {!introOpen && <QuizTimer seconds={QUIZ_INTERVAL} paused={modalOpen} stars={starsOf(activeSetup)} finished={(quizStars[activeSetup] ?? 0) >= QUIZ_STARS} locked={!!solutionShown[activeSetup]} onFire={fireQuestion} />}
-          <TopView lights={lights} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraAngle={cameraAngle} onCameraMove={setCameraAngle} cameraDistance={cameraDistance} focalLength={focalLength} backdropVisible={backdrop.visible} selected={selected} onSelect={select} onMove={editPolar} />
+          <TopView ghost={ghost} lights={lights} subjectZ={subjectZ} subjectRotY={subjectRotY} cameraAngle={cameraAngle} onCameraMove={setCameraAngle} cameraDistance={cameraDistance} focalLength={focalLength} backdropVisible={backdrop.visible} selected={selected} onSelect={select} onMove={editPolar} />
         </div>
       </section>
 

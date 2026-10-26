@@ -34,6 +34,8 @@ export type Setup = {
   lights: Light[]
   reference?: string
   challenge: ChallengeSpec
+  /** Pourquoi la principale, placée ainsi, donne ce rendu (solution commentée). */
+  why: L10n
 }
 
 const DISTANCE = 2
@@ -50,6 +52,7 @@ const rim = (enabled = false, x = 1.5, z = -1.5): Light => ({ id: 'rim', ...arou
 export const setups: Setup[] = [
   {
     id: 'rembrandt',
+    why: { fr: 'L’ombre du nez rejoint celle de la joue et dessine le triangle lumineux sous l’œil opposé.', en: 'The nose shadow meets the cheek shadow and draws the triangle of light under the far eye.' },
     label: { fr: 'Rembrandt', en: 'Rembrandt' },
     description: { fr: 'Triangle lumineux sous l’œil opposé. Source à 45° et légèrement haute.', en: 'A small triangle of light under the far eye. Source at 45°, slightly high.' },
     lights: [key(-3, 2.5), fill(2.5, 1), rim()],
@@ -58,6 +61,7 @@ export const setups: Setup[] = [
   },
   {
     id: 'butterfly',
+    why: { fr: 'Haute et dans l’axe, elle projette l’ombre papillon juste sous le nez.', en: 'High and on axis, it casts the butterfly shadow right under the nose.' },
     label: { fr: 'Butterfly / Paramount', en: 'Butterfly / Paramount' },
     description: { fr: 'Ombre papillon sous le nez. Source frontale, haute et centrée.', en: 'Butterfly-shaped shadow under the nose. Frontal, high and centred source.' },
     lights: [key(0, 3.5), fill(0, 1.5), rim()],
@@ -66,6 +70,7 @@ export const setups: Setup[] = [
   },
   {
     id: 'loop',
+    why: { fr: 'Moins écartée qu’en Rembrandt : l’ombre du nez forme une petite boucle sans toucher la joue.', en: 'Less off-axis than Rembrandt: the nose shadow forms a small loop without touching the cheek.' },
     label: { fr: 'Loop', en: 'Loop' },
     description: { fr: 'Petite ombre du nez en boucle, sans rejoindre l’ombre de la joue.', en: 'A small looping nose shadow that does not reach the cheek shadow.' },
     lights: [key(-2.3, 3), fill(2.8, 1), rim()],
@@ -74,6 +79,7 @@ export const setups: Setup[] = [
   },
   {
     id: 'split',
+    why: { fr: 'À 90°, elle n’éclaire qu’une moitié du visage : l’arête du nez trace la frontière.', en: 'At 90°, it lights only half of the face: the bridge of the nose draws the border.' },
     label: { fr: 'Split', en: 'Split' },
     description: { fr: 'Une moitié du visage éclairée, l’autre dans l’ombre.', en: 'One half of the face lit, the other in shadow.' },
     lights: [key(-4, 0), fill(4, 0), rim()],
@@ -82,6 +88,7 @@ export const setups: Setup[] = [
   },
   {
     id: 'broad',
+    why: { fr: 'Du côté tourné vers l’appareil, elle éclaire la partie large du visage.', en: 'On the side turned towards the camera, it lights the wide part of the face.' },
     label: { fr: 'Broad', en: 'Broad' },
     description: { fr: 'La partie la plus visible du visage reçoit la lumière.', en: 'The side of the face turned towards the camera gets the light.' },
     lights: [key(-3.2, 2.2), fill(2, 1), rim()],
@@ -90,6 +97,7 @@ export const setups: Setup[] = [
   },
   {
     id: 'short',
+    why: { fr: 'Du côté qui se détourne de l’appareil, elle sculpte le visage et laisse la partie proche dans l’ombre.', en: 'On the side turning away from the camera, it sculpts the face and leaves the near side in shadow.' },
     label: { fr: 'Short', en: 'Short' },
     description: { fr: 'La partie la moins visible du visage est éclairée, pour plus de volume.', en: 'The side of the face turned away from the camera is lit, for more depth.' },
     lights: [key(3.2, 2.2), fill(-2, 1), rim()],
@@ -98,6 +106,7 @@ export const setups: Setup[] = [
   },
   {
     id: 'clamshell',
+    why: { fr: 'Haute et dans l’axe, elle travaille avec la source basse : les ombres du visage s’ouvrent.', en: 'High and on axis, it works with the low source: the facial shadows open up.' },
     label: { fr: 'Clamshell', en: 'Clamshell' },
     description: { fr: 'Deux sources alignées : une au-dessus, une sous le visage.', en: 'Two stacked sources: one above, one below the face.' },
     lights: [key(0, 3.5, 'Snoot', 50), fill(0, 2, 24, 'Reflecteur', 1.05, 1.7), rim()],
@@ -106,6 +115,7 @@ export const setups: Setup[] = [
   },
   {
     id: 'threepoint',
+    why: { fr: 'Écartée d’environ 45°, elle modèle le visage ; le contre-jour se charge de la silhouette.', en: 'About 45° off-axis, it shapes the face; the rim light takes care of the silhouette.' },
     label: { fr: 'Trois points', en: 'Three-point' },
     description: { fr: 'Principale, remplissage et contre-jour : le sujet se détache du fond.', en: 'Key, fill and rim light: the subject separates from the background.' },
     lights: [key(-2.8, 2.6, 'Softbox'), fill(2.6, 1.2, 16), rim(true)],

@@ -7,7 +7,11 @@ const MIN_E = MIN_LIGHT_DISTANCE - EMITTER_OFFSET
 const MAX_E = MAX_LIGHT_DISTANCE - EMITTER_OFFSET
 const colors: Record<LightId, string> = { key: '#ffd47a', fill: '#9ed4ff', rim: '#d6a8ff' }
 
+/** Repère de l'indice : là où doit aller le boîtier ou une lampe (coordonnées du plan, en mètres). */
+export type Ghost = { kind: 'camera'; angle: number; distance: number } | { kind: 'light'; id: LightId; x: number; y: number }
+
 type Props = {
+  ghost?: Ghost
   lights: Light[]
   subjectZ: number
   subjectRotY: number
@@ -22,7 +26,7 @@ type Props = {
 }
 
 /** Plan du plateau vu de dessus : la caméra est en bas, on fait glisser la tête des lampes. */
-export function TopView({ lights, subjectZ, subjectRotY, cameraAngle, cameraDistance, focalLength, backdropVisible, selected, onSelect, onMove, onCameraMove }: Props) {
+export function TopView({ ghost, lights, subjectZ, subjectRotY, cameraAngle, cameraDistance, focalLength, backdropVisible, selected, onSelect, onMove, onCameraMove }: Props) {
   const { t } = useI18n()
   const svgRef = useRef<SVGSVGElement>(null)
   const [dragging, setDragging] = useState<LightId | 'camera' | null>(null)
@@ -87,6 +91,11 @@ export function TopView({ lights, subjectZ, subjectRotY, cameraAngle, cameraDist
         <rect x={-.17} y={-.09} width={.34} height={.2} rx={.04} /><rect x={-.07} y={-.18} width={.14} height={.1} rx={.02} />
       </g>
       </g>
+      {/* repère de l'indice, en pointillés */}
+      {ghost?.kind === 'camera' && <g transform={`rotate(${-ghost.angle})`} className="tv-ghost" style={{ color: '#7fc9f3' }}>
+        <circle cx={camX} cy={Math.min(RANGE - .18, ghost.distance)} r={.26} />
+      </g>}
+      {ghost?.kind === 'light' && <g className="tv-ghost" style={{ color: colors[ghost.id] }}><circle cx={ghost.x} cy={ghost.y} r={.24} /><circle cx={ghost.x} cy={ghost.y} r={.05} className="tv-ghost-dot" /></g>}
       {/* sujet */}
       <g className="tv-subject">
         <circle r={.24} />
